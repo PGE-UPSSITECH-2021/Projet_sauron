@@ -32,9 +32,36 @@ def handler_robot_move(msg):
         return True
 
 def handler_robot_move_home(a):
-    target = group.get_named_target_values("home")
+    move_predef("home")
 
-    print("Move robot to home.")
+def handler_robot_move_calibration(a):
+    move_predef("calibration")
+
+def handler_robot_move_localisation(a):
+    move_predef("localisation")
+
+
+def move_robot_server():
+    rospy.init_node('move_robot_server', anonymous=True)
+
+    s = rospy.Service('move_robot', Robot_move, handler_robot_move)
+    print("Server move robot ready !")
+
+    s1 = rospy.Service('move_robot_home', Robot_move_predef, handler_robot_move_home)
+    print("Server move robot to home ready !")
+
+    s2 = rospy.Service('move_robot_calibration', Robot_move_predef, handler_robot_move_calibration)
+    print("Server move robot to calibration ready !")
+
+    s3 = rospy.Service('move_robot_localisation', Robot_move_predef, handler_robot_move_localisation)
+    print("Server move robot to localisation ready !")
+
+    print("Robot ready to move !")
+
+def move_predef(conf_name):
+    target = group.get_named_target_values(conf_name)
+
+    print("Move robot to " + conf_name + ".")
     print("Joint Values " + str(target))
 
     group.set_joint_value_target(target)
@@ -48,19 +75,6 @@ def handler_robot_move_home(a):
         group.stop()
         return True
 
-
-
-def move_robot_server():
-    rospy.init_node('move_robot_server', anonymous=True)
-
-    s = rospy.Service('move_robot', Robot_move, handler_robot_move)
-    print("Server move robot ready !")
-
-    s1 = rospy.Service('move_robot_home', Robot_move_predef, handler_robot_move_home)
-    print("Server move robot to home ready !")
-
-    print("Robot ready to move !")
-
 if __name__ == "__main__":
     #Limitation de la vitesse
     args = sys.argv[1:]
@@ -68,6 +82,8 @@ if __name__ == "__main__":
         if args[0] == "True" :
             print("Limited speed.")
             group.set_max_velocity_scaling_factor(0.01)
+
+    print(group.get_named_targets())
 
     #Lancement des servers
     move_robot_server()
