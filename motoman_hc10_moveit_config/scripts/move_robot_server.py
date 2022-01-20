@@ -41,36 +41,34 @@ def handler_robot_move_ready(a):
 
 
 def move_robot_server():
-    rospy.init_node('move_robot_server', anonymous=True)
-
     s = rospy.Service('move_robot', Robot_move, handler_robot_move)
-    print("Server move robot ready !")
+    rospy.loginfo("Server move robot ready !")
 
     s1 = rospy.Service('move_robot_home', Robot_move_predef, handler_robot_move_home)
-    print("Server move robot to home ready !")
+    rospy.loginfo("Server move robot to home ready !")
 
     s2 = rospy.Service('move_robot_calibration', Robot_move_predef, handler_robot_move_calibration)
-    print("Server move robot to calibration ready !")
+    rospy.loginfo("Server move robot to calibration ready !")
 
     s3 = rospy.Service('move_robot_localisation', Robot_move_predef, handler_robot_move_localisation)
-    print("Server move robot to localisation ready !")
+    rospy.loginfo("Server move robot to localisation ready !")
 
     s4 = rospy.Service('move_robot_ready', Robot_move_predef, handler_robot_move_ready)
-    print("Server move robot to ready ready !")
+    rospy.loginfo("Server move robot to ready ready !")
 
-    print("Robot ready to move !")
+    rospy.loginfo("Robot ready to move !")
 
 def move_predef(conf_name):
     target = group.get_named_target_values(conf_name)
 
-    print("Move robot to " + conf_name + ".")
-    print("Joint Values " + str(target))
+    rospy.loginfo("Move robot to " + conf_name + ".")
+    rospy.loginfo("Joint Values " + str(target))
 
     group.set_joint_value_target(target)
     plan = group.plan()
 
     if plan.joint_trajectory.joint_names == [] :
-        print(False)
+        rospy.logerr("Unreachable position")
         return False
     else :
         group.go(wait=True)
@@ -78,14 +76,20 @@ def move_predef(conf_name):
         return True
 
 if __name__ == "__main__":
-    #Limitation de la vitesse
+    rospy.init_node('move_robot_server', anonymous=True)
+
+    #Limitation de la vitesse    
     args = sys.argv[1:]
     if len(args) >= 1:
-        speed = 50
-        if args[0] == "True" :
-            print("speed limited to " + str(speed) + "%.")
+        try:
+            speed = float(args[0])
             group.set_max_velocity_scaling_factor(speed/100)
-
+            rospy.loginfo("Speed limited to " + str(speed) + "%.")
+        except ValueError:
+            rospy.logerr('Error the speed percentage must be float ! No : "' + args[0] + '"')
+            rospy.signal_shutdown("Error speed percentage value.")
+            
     #Lancement des servers
-    move_robot_server()
-    rospy.spin()
+    if not rospy.is_shutdown:
+        move_robot_server()
+        rospy.spin()
