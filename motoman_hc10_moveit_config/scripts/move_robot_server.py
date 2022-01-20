@@ -90,6 +90,6 @@ if __name__ == "__main__":
             rospy.signal_shutdown("Error speed percentage value.")
             
     #Lancement des servers
-    if not rospy.is_shutdown:
+    if not rospy.is_shutdown():
         move_robot_server()
         rospy.spin()

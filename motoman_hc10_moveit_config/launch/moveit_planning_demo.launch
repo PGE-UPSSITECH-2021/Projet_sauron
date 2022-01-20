@@ -1,6 +1,6 @@
 <launch>
     <arg name="sim" default="true" />
-    <arg name="speed_percentage" default="99" />
+    <arg name="speed_percentage" default="100" />
 
     <group if="$(arg sim)">
         <include file="$(find motoman_hc10_moveit_config)/launch/moveit_planning_execution.launch" />
