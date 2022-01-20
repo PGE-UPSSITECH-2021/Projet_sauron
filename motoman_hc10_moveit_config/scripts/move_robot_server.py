@@ -1,13 +1,9 @@
 #!/usr/bin/env python
 from os import wait
 import sys
-import copy
 import rospy
 import moveit_commander
-import moveit_msgs.msg
-import geometry_msgs.msg
 from motoman_hc10_moveit_config.srv import Robot_move, Robot_move_predef
-import numpy as np
 
 moveit_commander.roscpp_initialize(sys.argv)
 robot = moveit_commander.RobotCommander()
@@ -23,7 +19,7 @@ def handler_robot_move(msg):
     plan = group.plan()
 
     if plan.joint_trajectory.joint_names == [] :
-        print(false)
+        print(False)
         return False
     else :
         group.go(wait=True)
@@ -32,13 +28,16 @@ def handler_robot_move(msg):
         return True
 
 def handler_robot_move_home(a):
-    move_predef("home")
+    return move_predef("home")
 
 def handler_robot_move_calibration(a):
-    move_predef("calibration")
+    return move_predef("calibration")
 
 def handler_robot_move_localisation(a):
-    move_predef("localisation")
+    return move_predef("localisation")
+
+def handler_robot_move_ready(a):
+    return move_predef("ready")
 
 
 def move_robot_server():
@@ -56,6 +55,9 @@ def move_robot_server():
     s3 = rospy.Service('move_robot_localisation', Robot_move_predef, handler_robot_move_localisation)
     print("Server move robot to localisation ready !")
 
+    s4 = rospy.Service('move_robot_ready', Robot_move_predef, handler_robot_move_ready)
+    print("Server move robot to ready ready !")
+
     print("Robot ready to move !")
 
 def move_predef(conf_name):
@@ -68,7 +70,7 @@ def move_predef(conf_name):
     plan = group.plan()
 
     if plan.joint_trajectory.joint_names == [] :
-        print(false)
+        print(False)
         return False
     else :
         group.go(wait=True)
@@ -79,11 +81,10 @@ if __name__ == "__main__":
     #Limitation de la vitesse
     args = sys.argv[1:]
     if len(args) >= 1:
+        speed = 50
         if args[0] == "True" :
-            print("Limited speed.")
-            group.set_max_velocity_scaling_factor(0.01)
-
-    print(group.get_named_targets())
+            print("speed limited to " + str(speed) + "%.")
+            group.set_max_velocity_scaling_factor(speed/100)
 
     #Lancement des servers
     move_robot_server()

@@ -22,15 +22,23 @@
         <joint name="joint_6_t" value="0" />
     </group_state>
     <group_state name="localisation" group="manipulator">
-        <joint name="joint_1_s" value="-0.959931" />
-        <joint name="joint_2_l" value="-0.610865" />
-        <joint name="joint_3_u" value="0.698132" />
+        <joint name="joint_1_s" value="0.750492" />
+        <joint name="joint_2_l" value="0.750492" />
+        <joint name="joint_3_u" value="3.03687" />
         <joint name="joint_4_r" value="0" />
-        <joint name="joint_5_b" value="-0.575959" />
+        <joint name="joint_5_b" value="-2.28638" />
         <joint name="joint_6_t" value="0" />
     </group_state>
     <group_state name="calibration" group="manipulator">
-        <joint name="joint_1_s" value="0" />
+        <joint name="joint_1_s" value="1.65806" />
+        <joint name="joint_2_l" value="0.628319" />
+        <joint name="joint_3_u" value="3.08923" />
+        <joint name="joint_4_r" value="0" />
+        <joint name="joint_5_b" value="-2.47837" />
+        <joint name="joint_6_t" value="-0.0872665" />
+    </group_state>
+    <group_state name="ready" group="manipulator">
+        <joint name="joint_1_s" value="0.785398" />
         <joint name="joint_2_l" value="0" />
         <joint name="joint_3_u" value="1.5708" />
         <joint name="joint_4_r" value="0" />

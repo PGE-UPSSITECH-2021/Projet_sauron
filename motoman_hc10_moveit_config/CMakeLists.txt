@@ -22,9 +22,9 @@ catkin_package(CATKIN_DEPENDS
   rospy
 )
 
-catkin_install_python(PROGRAMS scripts/add_interferences.py
-  scripts/move_to_joints.py
-  scripts/move_to_pose.py
+catkin_install_python(PROGRAMS
+  scripts/add_interferences.py
+  scripts/add_interferences_box.py
   scripts/move_robot_server.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
