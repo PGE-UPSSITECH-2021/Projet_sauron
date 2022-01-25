@@ -108,8 +108,8 @@ class MoveGroupPythonIntefaceTutorial(object):
         box_name = name[i]
         print(box_name)
         scene.add_box(box_name, box_pose, size=(xL, yL, zL))
-        
-	self.box_name = box_name
+
+        self.box_name = box_name
         self.wait_for_state_update(box_is_known=True)
 
 def main():

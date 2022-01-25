@@ -6,10 +6,6 @@ Panels:
       Expanded:
         - /MotionPlanning1
         - /MotionPlanning1/Scene Robot1
-        - /MotionPlanning1/Scene Robot1/Links1
-        - /MotionPlanning1/Scene Robot1/Links1/tool01
-        - /MotionPlanning1/Scene Robot1/Links1/tool01/Position1
-        - /MotionPlanning1/Scene Robot1/Links1/tool01/Orientation1
       Splitter Ratio: 0.7425600290298462
     Tree Height: 271
   - Class: rviz/Help
@@ -206,7 +202,7 @@ Visualization Manager:
             Value: true
           tool0:
             Alpha: 1
-            Show Axes: true
+            Show Axes: false
             Show Trail: false
         Robot Alpha: 1
         Show Robot Collision: false
@@ -244,10 +240,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.709796130657196
+      Pitch: 0.6197963356971741
       Target Frame: base_link
       Value: XYOrbit (rviz)
-      Yaw: 1.7767608165740967
+      Yaw: 3.5749454498291016
     Saved: ~
 Window Geometry:
   Displays:
