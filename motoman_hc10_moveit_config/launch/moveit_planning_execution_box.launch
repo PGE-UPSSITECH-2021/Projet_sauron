@@ -12,6 +12,8 @@
   <!-- the "sim" argument controls whether we connect to a Simulated or Real robot -->
   <!--  - if sim=false, a robot_ip argument is required -->
   <arg name="sim" default="true" />
+  <arg name="robot_ip" default="true" />
+  <arg name="controller" default="true" />
   <!--Uncomment the lines below if you want to fixate the robot_ip address and its controller-->
   <!--<arg name="robot_ip" default="192.168.0.113" unless="$(arg sim)" />
   <arg name="controller" default="yrc1000" unless="$(arg sim)" /> -->
