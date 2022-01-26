@@ -14,6 +14,11 @@ add_service_files(
   Speed_percentage.srv
 )
 
+add_message_files(
+  FILES
+  IHM_msg.msg
+)
+
 generate_messages(
   DEPENDENCIES
   geometry_msgs
@@ -26,6 +31,7 @@ catkin_package(CATKIN_DEPENDS
 catkin_install_python(PROGRAMS
   scripts/add_interferences.py
   scripts/add_interferences_box.py
+  scripts/add_interferences_simulation.py
   scripts/move_robot_server.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
