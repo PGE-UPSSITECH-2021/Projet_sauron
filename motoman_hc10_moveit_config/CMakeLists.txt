@@ -11,6 +11,7 @@ add_service_files(
   FILES
   Robot_move.srv
   Robot_move_predef.srv
+  Speed_percentage.srv
 )
 
 generate_messages(

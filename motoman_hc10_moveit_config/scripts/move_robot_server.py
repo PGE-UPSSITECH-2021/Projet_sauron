@@ -3,7 +3,7 @@ from os import wait
 import sys
 import rospy
 import moveit_commander
-from motoman_hc10_moveit_config.srv import Robot_move, Robot_move_predef
+from motoman_hc10_moveit_config.srv import Robot_move, Robot_move_predef, Speed_percentage
 import useful_robot
 
 
@@ -66,6 +66,11 @@ class Move_robot:
         print(useful_robot.pose_msg_to_homogeneous_matrix(pose))
         return True
 
+    def handler_set_speed_perentage(self, msg):
+        self.group.set_max_velocity_scaling_factor(msg.speed_percentage/100)
+        rospy.loginfo("Speed limited to " + str(msg.speed_percentage) + "%.")
+        return 1
+
     def move_robot_server(self):
         s = rospy.Service('move_robot', Robot_move, self.handler_robot_move)
         rospy.loginfo("Server move robot ready !")
@@ -83,6 +88,8 @@ class Move_robot:
         rospy.loginfo("Server move robot to parcking ready !")
 
         s_fk = rospy.Service('get_fk', Robot_move_predef, self.handler_get_fk)
+
+        s_speed = rospy.Service('set_speed_percentage', Speed_percentage, self.handler_set_speed_perentage)
 
         rospy.loginfo("Robot ready to move !")
 
