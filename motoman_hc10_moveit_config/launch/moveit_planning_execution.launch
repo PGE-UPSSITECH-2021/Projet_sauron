@@ -50,7 +50,7 @@
   </include>
 
   <!-- add interferences using python script -->
-  <node name="add_interferences" pkg="motoman_hc10_moveit_config" type="add_interferences.py" />
+  <node name="add_interferences" pkg="motoman_hc10_moveit_config" type="add_interferences_simulation.py" />
   
 <!--  
   <include file="$(find motoman_hc10_moveit_config)/launch/default_warehouse_db.launch" />

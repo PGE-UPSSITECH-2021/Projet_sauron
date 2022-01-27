@@ -12,6 +12,7 @@ add_service_files(
   Robot_move.srv
   Robot_move_predef.srv
   Speed_percentage.srv
+  Robot_do_square.srv
 )
 
 add_message_files(

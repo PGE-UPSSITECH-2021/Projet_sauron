@@ -15,7 +15,7 @@ class StepReader:
 
         self.read_data(data)
 
-    def create_cylenders(self):
+    def create_cylinders(self):
         for args in self.cylinders_args:
             s = args.split(",")
             rayon = float(s[2])
@@ -39,7 +39,7 @@ class StepReader:
 
             self.cylinders.append(cylender)
 
-    def getCylenders(self) :
+    def getCylinders(self) :
         return self.cylinders
     
     def read_data(self, data):
@@ -48,7 +48,7 @@ class StepReader:
         for l in lines:
             self.read_line(l)
             
-        self.create_cylenders()
+        self.create_cylinders()
 
     def read_line(self, l):
         s = l.split("=")
