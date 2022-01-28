@@ -32,7 +32,6 @@ catkin_package(CATKIN_DEPENDS
 catkin_install_python(PROGRAMS
   scripts/add_interferences.py
   scripts/add_interferences_box.py
-  scripts/add_interferences_simulation.py
   scripts/move_robot_server.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
