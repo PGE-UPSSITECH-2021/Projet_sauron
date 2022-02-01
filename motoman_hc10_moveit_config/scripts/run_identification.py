@@ -6,7 +6,7 @@ import rospy
 import rospkg
 from motoman_hc10_moveit_config.srv import Robot_move, Robot_move_predef
 
-def run_identification(plaque_pos, nom_plaque, step_folder, dist =  0.7):
+def run_identification(plaque_pos, nom_plaque, step_folder, dist =  0.93):
     step = StepReader(step_folder + "/" + str(nom_plaque) + ".stp")
     cylinders_dict = {}
     
