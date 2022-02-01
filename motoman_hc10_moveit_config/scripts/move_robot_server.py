@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from os import wait
+
 import sys
 import rospy
 import moveit_commander
@@ -16,6 +16,7 @@ class Move_robot:
         self.scene = moveit_commander.PlanningSceneInterface()
         self.group = moveit_commander.MoveGroupCommander("manipulator")
         self.used = False #TODO
+        self.speed = 1
 
         #Limitation de la vitesse    
         args = sys.argv[1:]
@@ -68,9 +69,10 @@ class Move_robot:
         return True
 
     def handler_set_speed_perentage(self, msg):
-        self.group.set_max_velocity_scaling_factor(msg.speed_percentage/100)
+        self.speed = msg.speed_percentage/100
+        self.group.set_max_velocity_scaling_factor(self.speed)
         rospy.loginfo("Speed limited to " + str(msg.speed_percentage) + "%.")
-        return 1
+        return []
 
     def handler_robot_move_lin(self, msg):
         waypoints = [msg.Pose]
@@ -86,6 +88,7 @@ class Move_robot:
             print(False)
             return False
         else :
+            plan = self.group.retime_trajectory(self.robot.get_current_state(),plan,velocity_scaling_factor = self.speed)
             self.group.execute(plan, wait=True)
             self.group.stop()
             self.group.clear_pose_targets()

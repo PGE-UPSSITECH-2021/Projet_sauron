@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-
+import os
+import rospkg
 import sys
 import rospy
 import moveit_commander
@@ -118,8 +119,9 @@ class MoveGroupPythonIntefaceTutorial(object):
     pose_Ground.pose.position.y = 0.5
     pose_Ground.pose.position.z = -0.270
 
-
-    scene.add_mesh("plaque",pose_Ground,'/home/alexandre/Plaque_1.stl', size=(1e-3, 1e-3, 1e-3))
+    rospack = rospkg.RosPack()
+    cwd = rospack.get_path("motoman_hc10_moveit_config")
+    scene.add_mesh("plaque",pose_Ground,cwd+'/plaques/Plaque_1.stl', size=(1e-3, 1e-3, 1e-3))
     self.box_name = "plaque"
     self.wait_for_state_update(box_is_known=True)
 

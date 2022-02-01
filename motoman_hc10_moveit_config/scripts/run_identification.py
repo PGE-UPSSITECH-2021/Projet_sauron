@@ -1,9 +1,9 @@
 #!/usr/bin/env python
-
 from StepReader import StepReader
 from useful_robot import rotation_between_vect, homogeneous_matrix_to_pose_msg
 import numpy as np
 import rospy
+import rospkg
 from motoman_hc10_moveit_config.srv import Robot_move, Robot_move_predef
 
 def run_identification(plaque_pos, nom_plaque, step_folder, dist =  0.7):
@@ -67,4 +67,6 @@ if __name__ == "__main__":
     R[0,3] = 0.5
     R[1,3] = 0.5
     R[2,3] = -0.270 + 0.275
-    run_identification(R, "Plaque_2", "/home/alexandre")
+    rospack = rospkg.RosPack()
+    cwd = rospack.get_path("motoman_hc10_moveit_config")
+    run_identification(R, "Plaque_2", cwd + "/plaques")
