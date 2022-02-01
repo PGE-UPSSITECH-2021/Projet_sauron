@@ -146,7 +146,7 @@
       <limit lower="${radians(-180)}" upper="${radians(180)}" effort="31.36" velocity="${radians(250)}"/>
     </joint>
     <joint name="${prefix}joint_6_t-tool0" type="fixed">
-      <origin xyz="0 0 -0.130" rpy="${pi} 0 0"/>
+      <origin xyz="0.063 0.004 -0.216" rpy="${pi} 0 0"/>
       <parent link="${prefix}link_6_t"/>
       <child link="${prefix}tool0"/>
     </joint>

@@ -58,8 +58,8 @@ class Move_robot:
     def handler_robot_move_localisation(self, a):
         return self.move_predef("localisation")
 
-    def handler_robot_move_ready(self, a):
-        return self.move_predef("ready")
+    def handler_robot_move_parcking(self, a):
+        return self.move_predef("parcking")
 
     def handler_get_fk(self, a):
         pose = useful_robot.get_fk()
@@ -71,6 +71,25 @@ class Move_robot:
         self.group.set_max_velocity_scaling_factor(msg.speed_percentage/100)
         rospy.loginfo("Speed limited to " + str(msg.speed_percentage) + "%.")
         return 1
+
+    def handler_robot_move_lin(self, msg):
+        waypoints = [msg.Pose]
+
+        print("Move robot lin to : " + str(msg.Pose))
+
+        (plan, fraction) = self.group.compute_cartesian_path(
+                                        waypoints,   # waypoints to follow
+                                        0.01,        # eef_step
+                                        0.0)         # jump_threshold
+
+        if plan.joint_trajectory.joint_names == [] :
+            print(False)
+            return False
+        else :
+            self.group.execute(plan, wait=True)
+            self.group.stop()
+            self.group.clear_pose_targets()
+            return True
 
     def draw_square(self, a):
         waypoints = []
@@ -117,7 +136,7 @@ class Move_robot:
         s3 = rospy.Service('move_robot_localisation', Robot_move_predef, self.handler_robot_move_localisation)
         rospy.loginfo("Server move robot to localisation ready !")
 
-        s4 = rospy.Service('move_robot_parcking', Robot_move_predef, self.handler_robot_move_ready)
+        s4 = rospy.Service('move_robot_parcking', Robot_move_predef, self.handler_robot_move_parcking)
         rospy.loginfo("Server move robot to parcking ready !")
 
         s5 = rospy.Service('move_picture', Robot_move_predef, self.move_picture)
@@ -125,6 +144,9 @@ class Move_robot:
 
         s6 = rospy.Service('move_camera', Robot_move_predef, self.move_camera)
         rospy.loginfo("Server move robot to camera ready !")
+
+        s7 = s = rospy.Service('move_robot_lin', Robot_move, self.handler_robot_move_lin)
+        rospy.loginfo("Server move robot ready !")
 
         s_fk = rospy.Service('get_fk', Robot_move_predef, self.handler_get_fk)
 

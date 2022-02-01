@@ -188,7 +188,7 @@
         <limit effort="31.36" lower="-3.14159265359" upper="3.14159265359" velocity="4.36332312999" />
     </joint>
     <joint name="joint_6_t-tool0" type="fixed">
-        <origin rpy="3.14159265359 0 0" xyz="0 0 -0.130" />
+        <origin rpy="3.14159265359 0 0" xyz="0.063 0.004 0.216" />
         <parent link="link_6_t" />
         <child link="tool0" />
     </joint>

@@ -65,3 +65,28 @@ def get_fk(joint_state = None, fk_link="tool0", frame_id="base_link"):
         except rospy.ServiceException as e:
             rospy.logerr("Service exception: " + str(e))
             return None
+
+def rotation_between_vect(a, b):
+    a = a / np.linalg.norm(a)
+    b = b / np.linalg.norm(b)
+
+    if (a == -b).all():
+        return -np.eye(3)
+    elif (a == b).all():
+        return np.eye(3)
+
+    v = np.cross(a, b)
+    s = np.linalg.norm(v)
+    c = np.dot(a,b)
+    
+    vx = np.array([ [0, -v[2], v[1]],
+                    [v[2], 0, -v[0]],
+                    [-v[1], v[0], 0]])
+
+    '''print(a)
+    print(b)
+    print(v)
+    print(s)
+    print(c)'''
+
+    return np.eye(3) + vx + np.dot(vx,vx) * (1-c) / s**2
