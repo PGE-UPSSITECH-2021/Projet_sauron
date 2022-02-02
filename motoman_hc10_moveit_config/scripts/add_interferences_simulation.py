@@ -116,7 +116,7 @@ class MoveGroupPythonIntefaceTutorial(object):
     pose_Ground = geometry_msgs.msg.PoseStamped()
     pose_Ground.header.frame_id = "base"
     pose_Ground.pose.position.x = 0.5
-    pose_Ground.pose.position.y = 0.5
+    pose_Ground.pose.position.y = 0.2
     pose_Ground.pose.position.z = -0.270
 
     rospack = rospkg.RosPack()

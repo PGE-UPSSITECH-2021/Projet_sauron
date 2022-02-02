@@ -35,6 +35,7 @@ catkin_install_python(PROGRAMS
   scripts/add_interferences_simulation.py
   scripts/move_robot_server.py
   scripts/run_identification.py
+  scripts/run_qualite.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

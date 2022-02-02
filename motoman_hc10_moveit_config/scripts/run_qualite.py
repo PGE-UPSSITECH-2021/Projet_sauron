@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from http.client import CONTINUE
 from StepReader import StepReader
 from useful_robot import rotation_between_vect, homogeneous_matrix_to_pose_msg
 import numpy as np
@@ -8,47 +9,42 @@ from motoman_hc10_moveit_config.srv import Robot_move, Robot_move_predef
 
 from  geometry_msgs.msg import Pose
 
-def run_identification(plaque_pos, nom_plaque, step_folder, dist =  0.93):
+def run_qualite(plaque_pos, nom_plaque, step_folder, dist =  0.2):
     step = StepReader(step_folder + "/" + str(nom_plaque) + ".stp")
-    cylinders_dict = {}
+
+    points = []
+    d = {}
     
     for c in step.getCylinders():
         if c.rayon <= 10:
-            l = cylinders_dict.get(c.direction, [])
-            l.append(c)
-            cylinders_dict[c.direction] = l
+            d[c.position] = c.direction
+            
+    keys = sorted(list(d.keys()))
 
-    points = []
-
-    for key in cylinders_dict:
-        cylinders = cylinders_dict[key]
-        pos = []
-        for c in cylinders :
-            pos.append(c.position)
-
-        m = np.mean(pos, 0)/1000
+    for m in keys :
+        v = np.array(d[m])
+        m = np.array(m)/1000
         m = np.dot(plaque_pos, np.hstack((m, 1)))[:3]
 
-        p1 = m + dist * np.array(key)
-        p2 = m - dist * np.array(key)
+        p1 = m + dist * v
+        p2 = m - dist * v
 
-        v = np.array(key)
         p = None
 
         if p2[2] > p1[2]:
             p = np.array([p2[:3]])
         else :
-            v = -v
+            v= -v
             p = np.array([p1[:3]])
 
-        r = get_orientation_mat(v)
+        print(p)
 
-        p = np.hstack((r, p.T))
-        p = np.vstack((p, [0,0,0,1]))
-        msg = homogeneous_matrix_to_pose_msg(p)
-        points.append(msg)
+        R = get_orientation_mat(v)
 
+        h = np.hstack((R,p.T))
+        h = np.vstack((h, [0,0,0,1]))
 
+        points.append(homogeneous_matrix_to_pose_msg(h))
 
     move_robot = rospy.ServiceProxy('move_robot', Robot_move)
     move_parcking = rospy.ServiceProxy('move_robot_parcking', Robot_move_predef)
@@ -56,7 +52,7 @@ def run_identification(plaque_pos, nom_plaque, step_folder, dist =  0.93):
     for p in points:
         print(p)
         
-        resp0 = move_parcking()
+        #resp0 = move_parcking()
         resp1 = move_robot(p)
         print("press enter")
         raw_input()
@@ -81,4 +77,4 @@ if __name__ == "__main__":
     R[2,3] = -0.270 + 0.275
     rospack = rospkg.RosPack()
     cwd = rospack.get_path("motoman_hc10_moveit_config")
-    run_identification(R, "Plaque_2", cwd + "/plaques")
+    run_qualite(R, "Plaque_2", cwd + "/plaques")
