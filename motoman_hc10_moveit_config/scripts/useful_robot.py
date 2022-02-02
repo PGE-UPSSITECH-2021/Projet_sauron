@@ -21,7 +21,7 @@ def homogeneous_matrix_to_pose_msg(mat):
     pose.position.z = mat[2,3]
 
     # Conversion of the rotation matrix into a quaternion
-    q = Quaternion(matrix=mat)
+    q = Quaternion(matrix=mat[:3,:3])
     pose.orientation.x = q[0]
     pose.orientation.y = q[1]
     pose.orientation.z = q[2]

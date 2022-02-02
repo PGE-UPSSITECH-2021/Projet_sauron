@@ -38,12 +38,12 @@
         <joint name="joint_6_t" value="-0.0872665" />
     </group_state>
     <group_state name="parcking" group="manipulator">
-        <joint name="joint_1_s" value="0.506145" />
-        <joint name="joint_2_l" value="0.541052" />
-        <joint name="joint_3_u" value="2.82743" />
+        <joint name="joint_1_s" value="0.07381783265832045" />
+        <joint name="joint_2_l" value="0.1221832260429301" />
+        <joint name="joint_3_u" value="1.5023540603778378" />
         <joint name="joint_4_r" value="0" />
-        <joint name="joint_5_b" value="-2.28638" />
-        <joint name="joint_6_t" value="2.63545" />
+        <joint name="joint_5_b" value="-1.38112183753044" />
+        <joint name="joint_6_t" value="3.06876526168197" />
     </group_state>
     <group_state name="picture" group="manipulator">
         <joint name="joint_1_s" value="0.13" />
