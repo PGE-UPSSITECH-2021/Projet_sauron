@@ -68,6 +68,7 @@ def run_identification(plaque_pos, nom_plaque, step_folder, dist =  0.93):
         print("press enter")
         raw_input()
 
+    move_parcking()
     set_state("LIBRE INIT")
 
 def get_orientation_mat(tz):

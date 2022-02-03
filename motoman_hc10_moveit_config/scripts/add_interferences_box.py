@@ -71,13 +71,13 @@ class MoveGroupPythonIntefaceTutorial(object):
     dilatations = [d * dilatation for d in dilatations]
     
     # add tool interference
-    tool_size = 0.21 # m
+    tool_size = 0.20 # m
     tool_diameter = 0.07 # m #Error tool radius 
     cylinder_pose = geometry_msgs.msg.PoseStamped()
     cylinder_pose.header.frame_id = group.get_end_effector_link() # "tool0"
-    cylinder_pose.pose.position.x = 0
-    cylinder_pose.pose.position.y = 0
-    cylinder_pose.pose.position.z = (0.04+tool_size)/2
+    cylinder_pose.pose.position.x = -0.063
+    cylinder_pose.pose.position.y = 0.004
+    cylinder_pose.pose.position.z = (0.04+tool_size)/2 - 0.186/2
     cylinder_pose.pose.orientation.w = 1
     cylinder_name = "tool"
     scene.add_cylinder(cylinder_name, cylinder_pose, 0.04+tool_size, tool_diameter)

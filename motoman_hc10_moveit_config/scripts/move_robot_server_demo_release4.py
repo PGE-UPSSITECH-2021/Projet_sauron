@@ -37,8 +37,12 @@ class Move_robot:
         # Publication de l etat a 10 Hz
         rate = rospy.Rate(10)
         publisher = rospy.Publisher("robot_state", String, queue_size=10)
+        pub_cam = rospy.Publisher("cam_state", String, queue_size=10)
+        pub_secu = rospy.Publisher("securite_state", String, queue_size=10)
         while not rospy.is_shutdown():
             publisher.publish(self.state)
+            pub_cam.publish("EN MARCHE")
+            pub_secu.publish("OK")
             rate.sleep()
 
     def handler_robot_move(self, msg):

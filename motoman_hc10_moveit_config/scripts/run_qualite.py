@@ -64,6 +64,7 @@ def run_qualite(plaque_pos, nom_plaque, step_folder, dist =  0.2):
         print("press enter")
         raw_input()
 
+    move_parcking()
     set_state("LIBRE INIT")
 
 def get_orientation_mat(tz):
