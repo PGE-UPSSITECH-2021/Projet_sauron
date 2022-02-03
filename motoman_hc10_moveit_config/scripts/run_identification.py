@@ -4,7 +4,7 @@ from useful_robot import rotation_between_vect, homogeneous_matrix_to_pose_msg
 import numpy as np
 import rospy
 import rospkg
-from motoman_hc10_moveit_config.srv import Robot_move, Robot_move_predef
+from motoman_hc10_moveit_config.srv import Robot_move, Robot_move_predef, Robot_set_state
 
 from  geometry_msgs.msg import Pose
 
@@ -52,14 +52,23 @@ def run_identification(plaque_pos, nom_plaque, step_folder, dist =  0.93):
 
     move_robot = rospy.ServiceProxy('move_robot', Robot_move)
     move_parcking = rospy.ServiceProxy('move_robot_parcking', Robot_move_predef)
+    # Service pour la release 4 uniquement
+    set_state = rospy.ServiceProxy("set_robot_state", Robot_set_state)
+
+    set_state("EN PRODUCTION")
 
     for p in points:
         print(p)
+
+        if rospy.is_shutdown():
+            set_state("LIBRE NON INIT")
+            exit()
         
-        resp0 = move_parcking()
         resp1 = move_robot(p)
         print("press enter")
         raw_input()
+
+    set_state("LIBRE INIT")
 
 def get_orientation_mat(tz):
     tz = tz / np.linalg.norm(tz)
