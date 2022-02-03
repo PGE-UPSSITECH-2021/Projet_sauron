@@ -64,6 +64,10 @@ def run_qualite(plaque_pos, nom_plaque, step_folder, dist =  0.2):
         print("press enter")
         raw_input()
 
+    if rospy.is_shutdown():
+        set_state("LIBRE NON INIT")
+        exit()
+
     move_parcking()
     set_state("LIBRE INIT")
 
