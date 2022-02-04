@@ -3,32 +3,8 @@ project(motoman_hc10_moveit_config)
 
 find_package(catkin REQUIRED COMPONENTS
   rospy
-  message_generation
-  geometry_msgs
 )
 
-<<<<<<< HEAD
-=======
-add_service_files(
-  FILES
-  Robot_move.srv
-  Robot_move_predef.srv
-  Speed_percentage.srv
-  Robot_do_square.srv
-  Robot_set_state.srv
-)
-
-add_message_files(
-  FILES
-  IHM_msg.msg
-)
-
-generate_messages(
-  DEPENDENCIES
-  geometry_msgs
-)
-
->>>>>>> 16dced4d15e987257fb73eabe80c70acf5ca6fb5
 catkin_package(CATKIN_DEPENDS 
   rospy
 )
@@ -37,13 +13,6 @@ catkin_install_python(PROGRAMS
   scripts/add_interferences.py
   scripts/add_interferences_box.py
   scripts/add_interferences_simulation.py
-<<<<<<< HEAD
-=======
-  scripts/move_robot_server.py
-  scripts/run_identification.py
-  scripts/run_qualite.py
-  scripts/move_robot_server_demo_release4.py
->>>>>>> 16dced4d15e987257fb73eabe80c70acf5ca6fb5
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
