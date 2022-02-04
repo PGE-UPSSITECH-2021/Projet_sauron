@@ -5,7 +5,7 @@ from useful_robot import rotation_between_vect, homogeneous_matrix_to_pose_msg
 import numpy as np
 import rospy
 import rospkg
-from motoman_hc10_moveit_config.srv import Robot_move, Robot_move_predef
+from motoman_hc10_moveit_config.srv import Robot_move, Robot_move_predef, Robot_set_state
 
 from  geometry_msgs.msg import Pose
 
@@ -52,6 +52,7 @@ def run_qualite(plaque_pos, nom_plaque, step_folder, dist =  0.2):
     set_state = rospy.ServiceProxy("set_robot_state", Robot_set_state)
 
     set_state("EN PRODUCTION")
+    move_parcking()
 
     for p in points:
         print(p)
@@ -86,9 +87,9 @@ def get_orientation_mat(tz):
 if __name__ == "__main__":
     rospy.init_node('test_identification', anonymous=True)
     R = np.eye(4)
-    R[0,3] = 0.5
-    R[1,3] = 0.2
+    R[0,3] = 0.55
+    R[1,3] = 0.24
     R[2,3] = -0.270 + 0.275
     rospack = rospkg.RosPack()
     cwd = rospack.get_path("motoman_hc10_moveit_config")
-    run_qualite(R, "Plaque_2", cwd + "/plaques")
+    run_qualite(R, "Plaque_1", cwd + "/plaques")

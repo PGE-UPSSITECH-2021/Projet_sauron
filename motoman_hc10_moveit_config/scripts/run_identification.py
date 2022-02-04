@@ -56,6 +56,7 @@ def run_identification(plaque_pos, nom_plaque, step_folder, dist =  0.93):
     set_state = rospy.ServiceProxy("set_robot_state", Robot_set_state)
 
     set_state("EN PRODUCTION")
+    move_parcking()
 
     for p in points:
         print(p)
@@ -90,9 +91,9 @@ def get_orientation_mat(tz):
 if __name__ == "__main__":
     rospy.init_node('test_identification', anonymous=True)
     R = np.eye(4)
-    R[0,3] = 0.5
-    R[1,3] = 0.2
+    R[0,3] = 0.55
+    R[1,3] = 0.24
     R[2,3] = -0.270 + 0.275
     rospack = rospkg.RosPack()
     cwd = rospack.get_path("motoman_hc10_moveit_config")
-    run_identification(R, "Plaque_2", cwd + "/plaques")
+    run_identification(R, "Plaque_1", cwd + "/plaques")

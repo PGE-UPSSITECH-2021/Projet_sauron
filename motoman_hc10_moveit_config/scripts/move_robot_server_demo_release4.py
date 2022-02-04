@@ -7,6 +7,10 @@ from motoman_hc10_moveit_config.srv import Robot_move, Robot_move_predef, Speed_
 import useful_robot
 import copy
 from std_msgs.msg import String
+from geometry_msgs.msg import PoseStamped
+from sensor_msgs.msg import JointState
+from moveit_msgs.msg import Constraints, JointConstraint, PositionIKRequest
+from moveit_msgs.srv import GetPositionIK
 
 #Fichier pour la demo de la release 4
 
@@ -19,6 +23,9 @@ class Move_robot:
         self.used = False #TODO
         self.speed = 1
         self.state = "LIBRE NON INIT"
+
+        #self.group.set_planner_id("RRTconect")
+        #self.group.set_planning_time(20)
 
         #Limitation de la vitesse    
         args = sys.argv[1:]
@@ -49,9 +56,14 @@ class Move_robot:
         pose_goal = msg.Pose
         print("Move robot to : " + str(pose_goal))
 
-        self.group.set_pose_target(pose_goal)
 
-        plan = self.group.plan()
+        for i in range(5):
+            self.group.set_pose_target(pose_goal)
+
+            plan = self.group.plan()
+
+            if plan.joint_trajectory.joint_names != [] :
+                break         
 
         if plan.joint_trajectory.joint_names == [] :
             print(False)
@@ -191,6 +203,11 @@ class Move_robot:
 
         s_state = rospy.Service("set_robot_state", Robot_set_state, self.set_state)
 
+        s_en_const = rospy.Service("enable_const", Robot_move_predef, self.enable_constraint)
+        rospy.Service("disable_const", Robot_move_predef, self.remove_constraint)
+
+        s_test = rospy.Service("robot_test", Robot_move, self.test)
+
         rospy.loginfo("Robot ready to move !")
 
     def move_predef(self, conf_name):
@@ -209,6 +226,48 @@ class Move_robot:
             self.group.go(wait=True)
             self.group.stop()
             return True
+
+    def enable_constraint(self, msg):
+        constraints = Constraints()
+        joint_constraint = JointConstraint()
+
+        constraints.name = "joint_2_l"
+
+        joint_constraint.position = 0
+        joint_constraint.tolerance_above = 3.14/4
+        joint_constraint.tolerance_below = 3.14/4
+        joint_constraint.weight = 1
+
+        joint_constraint.joint_name = "joint_2_l"
+        constraints.joint_constraints.append(joint_constraint)
+
+        self.group.set_path_constraints(constraints)
+
+        return True
+
+    def remove_constraint(self, msg):
+        self.group.set_path_constraints(None)
+
+        return False
+
+    def test(self, msg):
+        pose_stamped = PoseStamped()
+        pose_stamped.header.frame_id = 'base_link'
+        pose_stamped.pose = msg.Pose
+
+        ik_request = PositionIKRequest() 
+        ik_request.group_name = 'manipulator'
+        ik_request.pose_stamped = pose_stamped
+        ik_request.timeout.secs = 0.1
+        ik_request.avoid_collisions = True
+
+        ik = rospy.ServiceProxy('/compute_ik', GetPositionIK)
+        res = ik(ik_request)
+
+        print(res)
+        return True
+
+
 
 
 if __name__ == "__main__":
