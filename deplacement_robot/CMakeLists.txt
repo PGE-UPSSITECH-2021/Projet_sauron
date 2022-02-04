@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.1.3)
-project(motoman_hc10_moveit_config)
+project(deplacement_robot)
 
 find_package(catkin REQUIRED COMPONENTS
   rospy
@@ -7,8 +7,6 @@ find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
 )
 
-<<<<<<< HEAD
-=======
 add_service_files(
   FILES
   Robot_move.srv
@@ -28,22 +26,15 @@ generate_messages(
   geometry_msgs
 )
 
->>>>>>> 16dced4d15e987257fb73eabe80c70acf5ca6fb5
 catkin_package(CATKIN_DEPENDS 
   rospy
 )
 
 catkin_install_python(PROGRAMS
-  scripts/add_interferences.py
-  scripts/add_interferences_box.py
-  scripts/add_interferences_simulation.py
-<<<<<<< HEAD
-=======
   scripts/move_robot_server.py
   scripts/run_identification.py
   scripts/run_qualite.py
   scripts/move_robot_server_demo_release4.py
->>>>>>> 16dced4d15e987257fb73eabe80c70acf5ca6fb5
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
