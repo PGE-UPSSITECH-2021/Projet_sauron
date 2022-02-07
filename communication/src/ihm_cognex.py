@@ -16,7 +16,7 @@ from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 import glob
 from communication.srv import capture
-from communication.srv import identification
+from communication.srv import identification, identificationResponse 
 from time import sleep
 from re import sub
 
@@ -151,10 +151,16 @@ def identify(msg):
         variables.points[-1].y = i[1]
         variables.points[-1].type = variables.get_type(i[2])
 
-    variables.pub_originale.publish(variables.originale)
+    '''variables.pub_originale.publish(variables.originale)
     variables.pub_annotee.publish(variables.annotee)
-    variables.pub_points.publish(variables.points)
-    return variables.points, variables.originale, variables.annotee
+    variables.pub_points.publish(variables.points)'''
+
+    res = identificationResponse()
+    res.point = variables.points
+    res.originale = variables.originale
+    res.annotee = variables.annotee
+
+    return res
 
 
 
