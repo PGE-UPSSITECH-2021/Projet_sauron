@@ -6,24 +6,68 @@ import numpy as np
 import rospy
 import rospkg
 from deplacement_robot.srv import Robot_move, Robot_move_predef, Robot_set_state
+from communication.srv import capture
 
 from  geometry_msgs.msg import Pose
 
-def run_qualite(plaque_pos, nom_plaque, step_folder, dist =  0.2):
-    step = StepReader(step_folder + "/" + str(nom_plaque) + ".stp")
+def run_qualite(plaque_pos, nom_plaque, step_folder, dist =  0.2, diametres = [5,7,12,18]):
+    # Lecture du fichier step et recuperation de tous les trous
+    d = get_holes(step_folder + "/" + str(nom_plaque) + ".stp", diametres)
 
-    points = []
+    # Determination du chemin en fonction des trous
+    points = get_path(plaque_pos, dist, d)
+
+    ######## Deplacement du robot ########
+
+    # Service pour deplacer le robot a un point donne
+    move_robot = rospy.ServiceProxy('move_robot', Robot_move)
+    # Service pour deplacer le robot a sa position de parcking
+    move_parcking = rospy.ServiceProxy('move_robot_parcking', Robot_move_predef)
+    # Service pour prendre une image
+    capture_image = rospy.ServiceProxy("camera/capture", capture)
+
+    move_parcking()
+
+    # Effectuer la trajectoire
+    for p in points:
+        # On arrete si le node est kill
+        if rospy.is_shutdown():
+            exit()
+        
+        # Le robot se deplace au point p
+        resp1 = move_robot(p[0])
+
+        # Pour les tests
+        print("press enter")
+        raw_input()
+
+    if rospy.is_shutdown():
+        exit()
+
+    # Retour a la position de parcking
+    move_parcking()
+
+
+
+def get_holes(file_path, diametres):
+    step = StepReader(file_path)
+
     d = {}
     
     for c in step.getCylinders():
-        if c.rayon <= 10:
-            d[c.position] = c.direction
+        if c.rayon <= 10 and c.rayon*2 in diametres:
+            d[c.position] = c
+
+    return d
+
+def get_path(plaque_pos, dist, d):
+    points = []
             
     keys = sorted(list(d.keys()))
 
-    for m in keys :
-        v = np.array(d[m])
-        m = np.array(m)/1000
+    for k in keys :
+        v = np.array(d[k].direction)
+        m = np.array(k)/1000
         m = np.dot(plaque_pos, np.hstack((m, 1)))[:3]
 
         p1 = m + dist * v
@@ -37,40 +81,17 @@ def run_qualite(plaque_pos, nom_plaque, step_folder, dist =  0.2):
             v= -v
             p = np.array([p1[:3]])
 
-        print(p)
-
         R = get_orientation_mat(v)
 
         h = np.hstack((R,p.T))
         h = np.vstack((h, [0,0,0,1]))
 
-        points.append(homogeneous_matrix_to_pose_msg(h))
+        rayon = d[k].rayon
+        msg = homogeneous_matrix_to_pose_msg(h)
 
-    move_robot = rospy.ServiceProxy('move_robot', Robot_move)
-    move_parcking = rospy.ServiceProxy('move_robot_parcking', Robot_move_predef)
-    # Service pour la release 4 uniquement
-    set_state = rospy.ServiceProxy("set_robot_state", Robot_set_state)
+        points.append((msg, rayon))
 
-    set_state("EN PRODUCTION")
-    move_parcking()
-
-    for p in points:
-        print(p)
-
-        if rospy.is_shutdown():
-            set_state("LIBRE NON INIT")
-            exit()
-        
-        resp1 = move_robot(p)
-        print("press enter")
-        raw_input()
-
-    if rospy.is_shutdown():
-        set_state("LIBRE NON INIT")
-        exit()
-
-    move_parcking()
-    set_state("LIBRE INIT")
+    return points
 
 def get_orientation_mat(tz):
     tz = tz / np.linalg.norm(tz)
