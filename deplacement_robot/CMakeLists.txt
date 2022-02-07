@@ -5,6 +5,7 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   message_generation
   geometry_msgs
+  sensor_msgs
 )
 
 add_service_files(
@@ -19,11 +20,16 @@ add_service_files(
 add_message_files(
   FILES
   IHM_msg.msg
+  Identification.msg
+  Qualite.msg
+  Trou_identification.msg
+  Trou_qualite.msg
 )
 
 generate_messages(
   DEPENDENCIES
   geometry_msgs
+  sensor_msgs
 )
 
 catkin_package(CATKIN_DEPENDS 
