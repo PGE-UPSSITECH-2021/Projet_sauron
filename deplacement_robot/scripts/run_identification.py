@@ -48,21 +48,15 @@ def run_identification(plaque_pos, nom_plaque, step_folder, dist =  0.93):
         msg = homogeneous_matrix_to_pose_msg(p)
         points.append(msg)
 
-
-
     move_robot = rospy.ServiceProxy('move_robot', Robot_move)
     move_parcking = rospy.ServiceProxy('move_robot_parcking', Robot_move_predef)
-    # Service pour la release 4 uniquement
-    set_state = rospy.ServiceProxy("set_robot_state", Robot_set_state)
 
-    set_state("EN PRODUCTION")
     move_parcking()
 
     for p in points:
         print(p)
 
         if rospy.is_shutdown():
-            set_state("LIBRE NON INIT")
             exit()
         
         resp1 = move_robot(p)
@@ -70,11 +64,9 @@ def run_identification(plaque_pos, nom_plaque, step_folder, dist =  0.93):
         raw_input()
 
     if rospy.is_shutdown():
-        set_state("LIBRE NON INIT")
         exit()
 
     move_parcking()
-    set_state("LIBRE INIT")
 
 def get_orientation_mat(tz):
     tz = tz / np.linalg.norm(tz)
