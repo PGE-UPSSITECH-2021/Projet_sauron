@@ -7,8 +7,11 @@ import rospy
 import rospkg
 from deplacement_robot.srv import Robot_move, Robot_move_predef, Robot_set_state
 from communication.srv import capture
+from qualite_interface import fonction_qualite
 
 from  geometry_msgs.msg import Pose
+from deplacement_robot.msg import Qualite, Trou_qualite
+from cv_bridge import CvBridge
 
 def run_qualite(plaque_pos, nom_plaque, step_folder, dist =  0.2, diametres = [5,7,12,18]):
     # Lecture du fichier step et recuperation de tous les trous
@@ -28,6 +31,11 @@ def run_qualite(plaque_pos, nom_plaque, step_folder, dist =  0.2, diametres = [5
 
     move_parcking()
 
+
+    bridge = CvBridge()
+    returned_msg = Qualite()
+    trous=[]
+
     # Effectuer la trajectoire
     for p in points:
         # On arrete si le node est kill
@@ -37,9 +45,30 @@ def run_qualite(plaque_pos, nom_plaque, step_folder, dist =  0.2, diametres = [5
         # Le robot se deplace au point p
         resp1 = move_robot(p[0])
 
+        trou_qualite_msg = Trou_qualite()
+
+        rosimage= capture_image()
+        cv_image = bridge.imgmsg_to_cv2(rosimage, desired_encoding='passthrough')
+        isdefective, defect, image = qualite_interface.fonction_qualite(p[1],cv_image,debug=True)
+        image_ros_result = bridge.cv2_to_imgmsg(image, encoding="passthrough")
+
+        trou_qualite_msg.x= p[2][0]
+        trou_qualite_msg.y= p[2][1]
+        trou_qualite_msg.z= p[2][2]
+        trou_qualite_msg.conforme   = isdefective
+        trou_qualite_msg.raison     = defect
+        trou_qualite_msg.image      = image_ros_result
+
+        trous.append(trou_qualite_msg)
+
         # Pour les tests
         print("press enter")
         raw_input()
+
+        #returned_msg.image=None #TODO
+        return returned_msg
+
+
 
     if rospy.is_shutdown():
         exit()
@@ -87,9 +116,10 @@ def get_path(plaque_pos, dist, d):
         h = np.vstack((h, [0,0,0,1]))
 
         rayon = d[k].rayon
+        pos=d[k].position
         msg = homogeneous_matrix_to_pose_msg(h)
 
-        points.append((msg, rayon))
+        points.append((msg, rayon, pos))
 
     return points
 
