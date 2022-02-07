@@ -14,6 +14,7 @@ class Contour:
         Parametre : image BGR d'une unique forme, binarisee (noir = hors forme, blanc = forme)
         """
         assert im_bgr is not None, "empty image"
+	
         assert (len(im_bgr.shape) == 3 and im_bgr.shape[2] == 3),"probleme dimensions, image BGR ?"
         self.__im_bgr = im_bgr
         self.__im_grey = cv2.cvtColor(self.__im_bgr,cv2.COLOR_BGR2GRAY)
@@ -24,9 +25,13 @@ class Contour:
         #self.__moments = cv2.moments(self.getContour())
         self.__moments = cv2.moments(self.__im_thresh,binaryImage=True)
 
-        contours,hierarchy = cv2.findContours(self.__im_thresh,cv2.RETR_TREE,cv2.CHAIN_APPROX_NONE)
-        assert (len(contours)==1),"plusieurs contours detectes"
-        self.__contour = contours[0] 
+        contours,hierarchy = cv2.findContours(self.__im_thresh,cv2.RETR_TREE,cv2.CHAIN_APPROX_NONE)[-2:]
+
+
+        self.__contour = contours
+
+
+
         
 
     def getContour(self):
@@ -101,17 +106,6 @@ class analyseContour:
         out : liste des points formant le contour, abscisse centre contour, ordonnee centre contour, aire du contour
         """
         contour = Contour(im_bgr)
-        print("m00 : {}".format(contour.getMoments()['m00']))
-        print("mu20 : {}".format(contour.getMoments()['mu20']))
-        print("mu02 : {}".format(contour.getMoments()['mu02']))
-        print("mu11 : {}".format(contour.getMoments()['mu11']))
-        print("nu20 : {}".format(contour.getMoments()['nu20']))
-        print("nu02 : {}".format(contour.getMoments()['nu02']))
-        print("nu11 : {}".format(contour.getMoments()['nu11']))
-        print("nu30 : {}".format(contour.getMoments()['nu30']))
-        print("nu03 : {}".format(contour.getMoments()['nu03']))
-        print("nu21 : {}".format(contour.getMoments()['nu21']))
-        print("nu12 : {}".format(contour.getMoments()['nu12']))
         
         #print("moments : {}".format(contour.getMoments()))
         return contour.getContour(),contour.getLigneCentre(),contour.getColonneCentre(),contour.getAire(),contour.getMoments()

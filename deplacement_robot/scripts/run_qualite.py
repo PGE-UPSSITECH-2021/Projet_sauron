@@ -12,8 +12,9 @@ from qualite_interface import fonction_qualite
 from  geometry_msgs.msg import Pose
 from deplacement_robot.msg import Qualite, Trou_qualite
 from cv_bridge import CvBridge
+import time
 
-def run_qualite(plaque_pos, nom_plaque, step_folder, dist =  0.2, diametres = [5,7,12,18]):
+def run_qualite(plaque_pos, nom_plaque, step_folder, dist =  0.18, diametres = [5,7,12,18]):
     # Lecture du fichier step et recuperation de tous les trous
     d = get_holes(step_folder + "/" + str(nom_plaque) + ".stp", diametres)
 
@@ -29,7 +30,7 @@ def run_qualite(plaque_pos, nom_plaque, step_folder, dist =  0.2, diametres = [5
     # Service pour prendre une image
     capture_image = rospy.ServiceProxy("camera/capture", capture)
 
-    move_parcking()
+    #move_parcking()
 
 
     bridge = CvBridge()
@@ -44,29 +45,39 @@ def run_qualite(plaque_pos, nom_plaque, step_folder, dist =  0.2, diametres = [5
         
         # Le robot se deplace au point p
         resp1 = move_robot(p[0])
+	time.sleep(2)
 
         trou_qualite_msg = Trou_qualite()
 
-        rosimage= capture_image()
-        cv_image = bridge.imgmsg_to_cv2(rosimage, desired_encoding='passthrough')
-        isdefective, defect, image = qualite_interface.fonction_qualite(p[1],cv_image,debug=True)
-        image_ros_result = bridge.cv2_to_imgmsg(image, encoding="passthrough")
+        res = capture_image()
+
+	rosimage = res.image
+        cv_image = bridge.imgmsg_to_cv2(rosimage, 'bgr8')
+
+	print("shape = ",cv_image.shape)
+        assert (len(cv_image.shape) == 3),"(1) probleme dimensions, image BGR ?"
+
+        isdefective, defect, image = fonction_qualite(p[1],cv_image,debug=True)
+
+
+        image_ros_result = bridge.cv2_to_imgmsg(image, 'bgr8')
 
         trou_qualite_msg.x= p[2][0]
         trou_qualite_msg.y= p[2][1]
         trou_qualite_msg.z= p[2][2]
         trou_qualite_msg.conforme   = isdefective
         trou_qualite_msg.raison     = defect
-        trou_qualite_msg.image      = image_ros_result
+        #trou_qualite_msg.image      = image_ros_result
 
         trous.append(trou_qualite_msg)
 
         # Pour les tests
+	print(trou_qualite_msg)
         print("press enter")
         raw_input()
 
         #returned_msg.image=None #TODO
-        return returned_msg
+    return returned_msg
 
 
 
@@ -131,7 +142,6 @@ def get_orientation_mat(tz):
     ty = ty / np.linalg.norm(ty)
 
     R = np.hstack((np.array([tx]).T, np.array([ty]).T, np.array([tz]).T))
-    print(R)
 
     return R
 
