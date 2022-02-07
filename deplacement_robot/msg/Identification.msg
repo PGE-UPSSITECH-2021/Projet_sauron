@@ -1,0 +1,2 @@
+deplacement_robot/Trou_identification[] trous
+sensor_msgs/Image image
