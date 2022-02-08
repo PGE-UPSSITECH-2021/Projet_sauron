@@ -24,8 +24,8 @@ class Move_robot:
         self.speed = 1
         self.state = "LIBRE NON INIT"
 
-        #self.group.set_planner_id("RRTconect")
-        #self.group.set_planning_time(20)
+        self.group.set_planner_id("TRRT")
+        self.group.set_planning_time(10)
 
         #Limitation de la vitesse    
         args = sys.argv[1:]
