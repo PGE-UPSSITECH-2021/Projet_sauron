@@ -45,16 +45,16 @@ def run_qualite(plaque_pos, nom_plaque, step_folder, dist =  0.18, diametres = [
         
         # Le robot se deplace au point p
         resp1 = move_robot(p[0])
-	time.sleep(2)
+        time.sleep(2)
 
         trou_qualite_msg = Trou_qualite()
 
         res = capture_image()
 
-	rosimage = res.image
+        rosimage = res.image
         cv_image = bridge.imgmsg_to_cv2(rosimage, 'bgr8')
 
-	print("shape = ",cv_image.shape)
+        print("shape = ",cv_image.shape)
         assert (len(cv_image.shape) == 3),"(1) probleme dimensions, image BGR ?"
 
         isdefective, defect, image = fonction_qualite(p[1],cv_image,debug=True)
@@ -72,11 +72,12 @@ def run_qualite(plaque_pos, nom_plaque, step_folder, dist =  0.18, diametres = [
         trous.append(trou_qualite_msg)
 
         # Pour les tests
-	print(trou_qualite_msg)
+        print(trou_qualite_msg)
         print("press enter")
         raw_input()
 
-        #returned_msg.image=None #TODO
+    #returned_msg.image=None #TODO
+    returned_msg.trous = trous
     return returned_msg
 
 

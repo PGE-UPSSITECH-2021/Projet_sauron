@@ -63,13 +63,15 @@ class Move_robot:
             plan = self.group.plan()
 
             if plan.joint_trajectory.joint_names != [] :
-                break         
+                break
+        
+        print(plan)
 
         if plan.joint_trajectory.joint_names == [] :
             print(False)
             return False
         else :
-            self.group.go(wait=True)
+            self.group.execute(plan)
             self.group.stop()
             self.group.clear_pose_targets()
             return True
