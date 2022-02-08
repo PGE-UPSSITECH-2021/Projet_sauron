@@ -24,6 +24,7 @@ add_message_files(
   Qualite.msg
   Trou_identification.msg
   Trou_qualite.msg
+  Localisation.msg
 )
 
 generate_messages(
@@ -41,6 +42,7 @@ catkin_install_python(PROGRAMS
   scripts/run_identification.py
   scripts/run_qualite.py
   scripts/move_robot_server_demo_release4.py
+  scripts/move_robot_controller.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

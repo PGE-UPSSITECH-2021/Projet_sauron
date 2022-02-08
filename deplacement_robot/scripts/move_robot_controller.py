@@ -1,28 +1,52 @@
 #!/usr/bin/env python
 
 import rospy
-from motoman_hc10_moveit_config.msg import IHM_msg
+from deplacement_robot.msg import IHM_msg
 
 import node_test as ndt
+from robot import Robot
 
 global ihm_data
 
 ihm_msg = None
 
+robot = Robot()
+
 def shutdown():
 	rospy.loginfo('%s is shutting down', rospy.get_caller_id())
 
-def callback_ihmn(data):
+def callback_ihm(data):
 	global ihm_msg
 	rospy.loginfo(rospy.get_caller_id() + str(data))
 	ihm_msg = data
 
 def get_action(msg):
 	if msg is not None:
-		return msg.action
+		if msg.action == 'Localiser la plaque':
+			return 'S_LOC'
+		if msg.action == 'Identifier':
+			return 'S_ID'
+		if msg.action == 'Verifier conformite':
+			return 'S_QUAL'
+		if msg.action == 'Deplacer le robot':
+			return 'S_DEPL'
+
+def get_plaqueName(msg):
+	return msg.plaque
+
+def get_diametres(msg):
+	if msg is None :
+		return []
+	diam_string = msg.diametre
+	diam_string = diam_string.split()
+	diametres = []
+	for d in diam_string:
+		if not 'mm' in d:
+			diametres.append(float(d))
+	return diametres
 
 # To write into a config file, loaded via json.load()
-TOPICS = {'IHM': {'name': 'ihm_topic', 'datatype': IHM_msg, 'callback': callback_ihmn}}
+TOPICS = {'IHM': {'name': 'ihm_topic', 'datatype': IHM_msg, 'callback': callback_ihm}}
 
 # Commands
 '''
@@ -108,7 +132,7 @@ def run():
 	for topic, params in TOPICS.items():
 		rospy.Subscriber(params['name'], params['datatype'], params['callback'])
 
-	rate = rospy.Rate(1)
+	rate = rospy.Rate(10)
 
 	while not rospy.is_shutdown():
 
@@ -137,7 +161,8 @@ def run():
 			loc_ok = id_ok = qual_ok = False
 
 			# Run loc service and get loc state
-			loc_ok = ndt.dummy_location()
+			#loc_ok = ndt.dummy_location()
+			loc_ok = robot.execute_localisation(nom_plaque=get_plaqueName(ihm_msg))
 
 			# Return states
 			return loc_ok, id_ok, qual_ok
@@ -155,7 +180,7 @@ def run():
 			assert loc_ok
 
 			# Run id service and get id state
-			id_ok = ndt.dummy_identification()
+			id_ok = robot.execute_identification(nom_plaque=get_plaqueName(ihm_msg), diametres=get_diametres(ihm_msg))
 
 			# Return states
 			return loc_ok, id_ok, qual_ok
@@ -174,7 +199,7 @@ def run():
 			assert loc_ok, id_ok
 
 			# Run qual service and get qual state
-			qual_ok = ndt.dummy_quality()
+			qual_ok = robot.execute_qualite(nom_plaque=get_plaqueName(ihm_msg), diametres=get_diametres(ihm_msg))
 
 			# Return states
 			return loc_ok, id_ok, qual_ok

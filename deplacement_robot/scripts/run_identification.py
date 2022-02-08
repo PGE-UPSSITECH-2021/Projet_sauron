@@ -5,19 +5,52 @@ import numpy as np
 import rospy
 import rospkg
 from deplacement_robot.srv import Robot_move, Robot_move_predef, Robot_set_state
+from communication.srv import identification
+from deplacement_robot.msg import Identification
 
 from  geometry_msgs.msg import Pose
 
-def run_identification(plaque_pos, nom_plaque, step_folder, dist =  0.93):
-    step = StepReader(step_folder + "/" + str(nom_plaque) + ".stp")
-    cylinders_dict = {}
-    
-    for c in step.getCylinders():
-        if c.rayon <= 10:
-            l = cylinders_dict.get(c.direction, [])
-            l.append(c)
-            cylinders_dict[c.direction] = l
+# TODO Fusion de donnees
+# TODO Traiter que les points vouluent
+# TODO Appel du service
+# TODO Message ROS
 
+def run_identification(plaque_pos, nom_plaque, step_folder, param_int=None, dist =  0.93):
+    # Lecture du fichier step et recuperation des trous
+    cylinders_dict = get_cylinders(step_folder + "/" + str(nom_plaque) + ".stp")
+
+    # Determination du chemin en fonction des trous
+    points = get_poses(cylinders_dict, plaque_pos, dist)
+
+    ######## Deplacement du robot ########
+    # Service pour deplacer le robot a un point donne
+    move_robot = rospy.ServiceProxy('move_robot', Robot_move)
+    # Service pour deplacer le robot a sa position de parcking
+    move_parcking = rospy.ServiceProxy('move_robot_parcking', Robot_move_predef)
+    # Service pour effectuer l identification
+    identification_srv = rospy.ServiceProxy("camera/identification", identification)
+
+    move_parcking()
+
+    for p in points:
+        print(p)
+
+        if rospy.is_shutdown():
+            exit()
+        
+        resp1 = move_robot(p)
+        print("press enter")
+        raw_input()
+
+    if rospy.is_shutdown():
+        exit()
+
+    move_parcking()
+
+    #TODO
+    return Identification()
+
+def get_poses(cylinders_dict, plaque_pos, dist):
     points = []
 
     for key in cylinders_dict:
@@ -48,25 +81,19 @@ def run_identification(plaque_pos, nom_plaque, step_folder, dist =  0.93):
         msg = homogeneous_matrix_to_pose_msg(p)
         points.append(msg)
 
-    move_robot = rospy.ServiceProxy('move_robot', Robot_move)
-    move_parcking = rospy.ServiceProxy('move_robot_parcking', Robot_move_predef)
+    return points
 
-    move_parcking()
+def get_cylinders(file_path):
+    step = StepReader(file_path)
+    cylinders_dict = {}
+    
+    for c in step.getCylinders():
+        if c.rayon <= 10:
+            l = cylinders_dict.get(c.direction, [])
+            l.append(c)
+            cylinders_dict[c.direction] = l
 
-    for p in points:
-        print(p)
-
-        if rospy.is_shutdown():
-            exit()
-        
-        resp1 = move_robot(p)
-        print("press enter")
-        raw_input()
-
-    if rospy.is_shutdown():
-        exit()
-
-    move_parcking()
+    return cylinders_dict
 
 def get_orientation_mat(tz):
     tz = tz / np.linalg.norm(tz)
@@ -87,5 +114,5 @@ if __name__ == "__main__":
     R[1,3] = 0.24
     R[2,3] = -0.270 + 0.275
     rospack = rospkg.RosPack()
-    cwd = rospack.get_path("motoman_hc10_moveit_config")
+    cwd = rospack.get_path("deplacement_robot")
     run_identification(R, "Plaque_1", cwd + "/plaques")
