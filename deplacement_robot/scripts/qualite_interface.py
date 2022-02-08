@@ -27,7 +27,7 @@ def fonction_qualite(rayon_attendu,image_raw,debug):
 
 
 
-    isdefective, defect, contours = analyseContour.caracterization(cv2.cvtColor(image_processed,cv2.COLOR_GRAY2RGB),rayon_attendu)
+    isdefective, defect, contours = analyseContour.caracterization(cv2.cvtColor(image_processed,cv2.COLOR_GRAY2RGB),rayon_attendu,px_to_mm,affichage=False)
 
     print("image raw")
     if(isdefective):
