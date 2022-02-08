@@ -57,7 +57,7 @@ def run_qualite(plaque_pos, nom_plaque, step_folder, dist =  0.18, diametres = [
         print("shape = ",cv_image.shape)
         assert (len(cv_image.shape) == 3),"(1) probleme dimensions, image BGR ?"
 
-        isdefective, defect, image = fonction_qualite(p[1],cv_image,debug=True)
+        isdefective, defect, image = fonction_qualite(p[1],cv_image,debug=False)
 
 
         image_ros_result = bridge.cv2_to_imgmsg(image, 'bgr8')
@@ -73,8 +73,8 @@ def run_qualite(plaque_pos, nom_plaque, step_folder, dist =  0.18, diametres = [
 
         # Pour les tests
         print(trou_qualite_msg)
-        print("press enter")
-        raw_input()
+        #print("press enter")
+        #raw_input()
 
     #returned_msg.image=None #TODO
     returned_msg.trous = trous
