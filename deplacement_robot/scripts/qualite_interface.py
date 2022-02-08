@@ -4,7 +4,10 @@ import cv2
 
 
 def fonction_qualite(rayon_attendu,image_raw,debug):
-
+    #calcul a la mainm pas fiable.
+    px_to_mm = 0.04624277456
+    mm_to_px = 21.625
+    rayon_attendu = rayon_attendu*mm_to_px  #ici on bosse en px
     #image = cv2.resize(image,(520,388))
 
     if(debug):
