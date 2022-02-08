@@ -120,7 +120,7 @@ class analyseContour:
         return cercle.getCircle()
     
     @staticmethod
-    def caracterization(image,rayon,affichage=False):
+    def caracterization(image,rayon,px_to_mm,affichage=False):
         """
         fonction caracterization
         in :
@@ -179,7 +179,7 @@ class analyseContour:
             pass
         else:
             isdefective=True
-            defect += "radius mismatch {}/{}".format(rayon,float(circle[2]))  # function parameter/cercle ({}/{})\n".format(rayon,float(circle[2]))
+            defect += "radius mismatch {}/{}".format(rayon*px_to_mm,float(circle[2])*px_to_mm)  # function parameter/cercle ({}/{})\n".format(rayon,float(circle[2]))
         
 
         if affichage:
