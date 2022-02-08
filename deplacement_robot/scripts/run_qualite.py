@@ -153,5 +153,5 @@ if __name__ == "__main__":
     R[1,3] = 0.24
     R[2,3] = -0.270 + 0.275
     rospack = rospkg.RosPack()
-    cwd = rospack.get_path("motoman_hc10_moveit_config")
+    cwd = rospack.get_path("deplacement_robot")
     run_qualite(R, "Plaque_1", cwd + "/plaques")
