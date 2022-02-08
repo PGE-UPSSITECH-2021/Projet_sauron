@@ -3,7 +3,7 @@ from qualite_pretraitement import *
 import cv2
 
 
-def fonction_qualite(rayon_attendu,image_raw,debug):
+def fonction_qualite(rayon_attendu,image_raw,debug,showResult = True):
     #calcul a la mainm pas fiable.
     px_to_mm = 0.04624277456
     mm_to_px = 21.625
@@ -36,7 +36,7 @@ def fonction_qualite(rayon_attendu,image_raw,debug):
         image_result= cv2.drawContours(image_raw, contours, -1, (0,255,0), 15,offset=offset_)
     
     
-    if(debug):
+    if(showResult):
         cv2.imshow('RESULT',cv2.resize(image_result,(520,388)))
 	cv2.waitKey(0)
 
