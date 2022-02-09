@@ -1,2 +1,3 @@
 deplacement_robot/Trou_identification[] trous
-sensor_msgs/Image image
+sensor_msgs/CompressedImage image
+int16 nbTrous
