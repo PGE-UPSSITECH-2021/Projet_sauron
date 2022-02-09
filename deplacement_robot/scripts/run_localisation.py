@@ -2,7 +2,6 @@ from typing import Type
 import numpy as np
 import rospy
 from deplacement_robot.srv import Robot_move_predef
-import random
 from deplacement_robot.msg import Localisation
 from communication.srv import capture
 from cv_bridge import CvBridge
@@ -82,8 +81,6 @@ def run_localisation():
         pts,matrice_extr = localiser(type_plaque=,model_path=,image=,M_hom_3D=,M_pass_oc=,M_intr=,coeff_distr=)
     except TypeError:
         print("plaque non trouvée")
-
-
 
 
 

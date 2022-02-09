@@ -61,6 +61,7 @@
         <joint name="joint_5_b" value="2.7" />
         <joint name="joint_6_t" value="-1.42" />
     </group_state>
+    
 
     
     <!--VIRTUAL JOINT: Purpose: this element defines a virtual joint between a robot link and an external frame of reference (considered fixed with respect to the robot)-->
