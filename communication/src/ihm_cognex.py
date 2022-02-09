@@ -6,6 +6,7 @@ from PIL import Image
 import rospy
 import telnetlib
 from ftplib import FTP
+import ftplib
 import time
 import cv2 as cv
 import numpy as np
@@ -14,11 +15,8 @@ from std_msgs.msg import Bool
 from communication.msg import Liste_points, Points
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
-import glob
 from communication.srv import capture
 from communication.srv import identification, identificationResponse 
-from time import sleep
-from re import sub
 
 global variables
 variables = Variables()
@@ -28,75 +26,84 @@ variables = Variables()
 ###########       CONNEXION       ############
 ##############################################
 
+# Check of the connexion
+# In case of failure, sends to camera/camera_ok False
 def check_connexion(func):
     def wrap(*args, **kwargs):
         try:
             result = func(*args, **kwargs)
             variables.pub_ok.publish(True)
             return result
-        except:
+        except ftplib.all_errors:
             variables.pub_ok.publish(False)
+            cognex_connect()
 
     return wrap
 
+
+# Connect to the camera
 @check_connexion
 def cognex_connect():
-    # Creation of telnet connexion
-    variables.tn = telnetlib.Telnet(variables.ip, timeout=10)
-    variables.tn.write(variables.user+'\r\n') # the user name is admin
-    variables.tn.write("\r\n") # there is no password - just return - now logged in
-    variables.tn.write("Put Live 1\r\n")
-    time.sleep(0.5)
-    variables.tn.read_eager()
+    # Creation of the Telnet connexion
+    variables.tn = telnetlib.Telnet(variables.ip, port=23, timeout=10)
+    # We enter the username
+    variables.tn.read_until("User: ", timeout=3)
+    variables.tn.write(variables.user+'\r\n')
+    # We enter the associated password
+    variables.tn.read_until("Password: ", timeout=3)
+    variables.tn.write("\r\n") 
+    variables.tn.read_until("User Logged In\r\n", timeout=3)
 
-    # Update of default gain value
-    variables.gain = int(read_cognex("SIG003"))
+    # We put online the system to be able to trigger the acquisition
+    variables.tn.write("SO1\r\n")
+    rospy.loginfo("Com OK: "+str(variables.tn.expect(["0\r\n", "1\r\n"], timeout=3)[2]))
 
-@check_connexion
-def talk_telnet(mode):
-    # Fonction qui permet de lire les informations sur un terminal Telnet
-    val = ''
-    buf = ''
-    buf = variables.tn.read_eager()
-    while (len(buf) == 0):
-        buf = variables.tn.read_eager()
-    val = buf
-    while (len(buf) != 0):
-        buf = variables.tn.read_eager()
-        val = val + buf
-    if (mode == "read") :
-        val = val[3:len(val)-2]
-        return val
-
-@check_connexion
-def read_cognex(case):
-    #intialisation des valeurs pour la récupération des informations caméra
-    val = ''
-    # result = -1
-    variables.tn.write(case+"\r\n")
-    val = talk_telnet("read")
-    #Détection d'une erreur lors de la communication 
-    if (val != '#ERR' and val != ''):
-        rospy.loginfo(val)
-    return val
-
-@check_connexion
-def write_cognex(case, val):
-    variables.tn.write(case+str(val)+"\r\n")
-    talk_telnet("write")
-
-@check_connexion
-def get_image():
-    # ftp logincognex read image cognex
+    # Creation of the FTP connexion
     variables.ftp = FTP(variables.ip)
     variables.ftp.login(variables.user)
 
-    # download file from cognex
+    # Update of default gain value
+    variables.gain = int(float(read_cognex("GVG003")))
+
+
+# Read a value from the camera
+@check_connexion
+def read_cognex(case):
+    # Send the command with Telnet
+    variables.tn.write(case+"\r\n")
+    # Wait for the return code
+    errorCode = str(variables.tn.read_until("1\r\n", timeout=3))
+    # Read of the returned value if the command did not fail
+    val = variables.tn.expect(["\r\n"], timeout=3)[2]
+    val = val[:len(val)-2]
+    # Log info to see what is happening
+    rospy.loginfo("Com : "+case+" -- "+"Com OK: "+errorCode[0]+" -- "+"Com Val : "+val+"\r\n")
+    return val
+
+
+# Write a value to the camera
+@check_connexion
+def write_cognex(case, val):
+    # Send the command and associated value with Telnet
+    variables.tn.write(case+str(val)+"\r\n")
+    # Log info to see what is happening
+    rospy.loginfo("Com : "+case+" -- "+"Com OK: "+str(variables.tn.expect(["0\r\n", "1\r\n"], timeout=3)[2]))
+
+
+# Get image from the camera
+@check_connexion
+def get_image():
+    # Send an acquisition event and wait for it
+    variables.tn.write("SW8\r\n")
+    # Log info to see what is happening
+    rospy.loginfo("Com OK: "+str(variables.tn.expect(["0\r\n", "1\r\n"], timeout=6)[2]))
+
+    # Download file from cognex
     filename = 'image.bmp'
     lf = open(filename, "wb")
     variables.ftp.retrbinary("RETR " + filename, lf.write)
     lf.close()
-    img = cv.imread('image.bmp')
+    img = cv.imread(filename)
 
     return img
 
@@ -108,52 +115,74 @@ def get_image():
 ##########       ROS EXCHANGES       #########
 ##############################################
 def detection(msg):
+    # Get image from the camera
     img = get_image()
-
+    # Try using the OpenCV bridge to convert image to the right format
     try:
         bridge = CvBridge()
         variables.originale = bridge.cv2_to_imgmsg(img, "bgr8")
     except CvBridgeError as e:
-        rospy.loginfo(e)
+        print(e)
 
+    # Publish to the associated node(s) and also return value(s)
     variables.pub_originale.publish(variables.originale)
     return variables.originale
 
 
 def identify(msg):
+    # Get image from the camera
     img = get_image()
 
-    imgOrg= img.copy()
-    imgGray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
-    imgGray = cv.medianBlur(imgGray, variables.blur)
+    if(variables.opencv):
+        # Change to grayscale
+        imgGray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+        # Apply a median blur
+        imgGray = cv.medianBlur(imgGray, variables.blur)
 
-    circles = cv.HoughCircles(imgGray, cv.HOUGH_GRADIENT, variables.dp, variables.minDist,
-                                param1=variables.p1, param2=variables.p2, minRadius=variables.minR, maxRadius=variables.maxR)
+        # Find circles in the image
+        circles = cv.HoughCircles(imgGray, cv.HOUGH_GRADIENT, variables.dp, variables.minDist,
+                                    param1=variables.p1, param2=variables.p2, minRadius=variables.minR, maxRadius=variables.maxR)
 
-    if(not(circles is None)):
-        circles = np.uint16(np.around(circles))
-        for i in circles[0,:]:
-	        printCircles(img,i[0],i[1],i[2])
-            # cv.circle(img,(i[0],i[1]),i[2],(0,255,0),4)
-            # cv.circle(img,(i[0],i[1]),2,(0,0,255),6)
+        # Create list with the circles found and associate to each of them their type
+        variables.points = []
+        if(circles is not None):
+            circles = np.uint16(np.around(circles))
+            for i in circles[0,:]:
+                variables.points.append(Points())
+                variables.points[-1].x = i[0]
+                variables.points[-1].y = i[1]
+                variables.points[-1].type = variables.get_type(i[2])
 
-    try:
-        bridge = CvBridge()
-        variables.originale = bridge.cv2_to_imgmsg(imgOrg, "bgr8")
-        variables.annotee = bridge.cv2_to_imgmsg(img, "bgr8")
-    except CvBridgeError as e:
-        rospy.loginfo(e)
+    # If the selected method is In-Sight
+    else:
+        # Get the number of detected circles in image
+        nbDetected = int(float(read_cognex("GVA026")))
+        # Create list with the circles found and associate to each of them their type
+        variables.points = []
+        # Get the x,y pixel position with the associed radius
+        for i in range(0,nbDetected):
+            caseCognex = 29 + i*3
+            try:
+                if caseCognex < 100:
+                    ptx = int(float(read_cognex("GVB0"+str(caseCognex))))
+                    pty = int(float(read_cognex("GVC0"+str(caseCognex))))
+                    ptr = int(float(read_cognex("GVD0"+str(caseCognex))))
+                else:
+                    ptx = int(float(read_cognex("GVB"+str(caseCognex))))
+                    pty = int(float(read_cognex("GVC"+str(caseCognex))))
+                    ptr = int(float(read_cognex("GVD"+str(caseCognex))))
+                variables.points.append(Points())
+                variables.points[-1].x = ptx
+                variables.points[-1].y = pty
+                variables.points[-1].type = variables.get_type(ptr)
+            except (ValueError, TypeError):
+                rospy.loginfo("#ERR when reading points locations")
 
-    variables.points = []
-    for i in circles[0,:]:
-        variables.points.append(Points())
-        variables.points[-1].x = i[0]
-        variables.points[-1].y = i[1]
-        variables.points[-1].type = variables.get_type(i[2])
 
-    '''variables.pub_originale.publish(variables.originale)
+    # Publish to the associated node(s) and also return value(s)
+    variables.pub_originale.publish(variables.originale)
     variables.pub_annotee.publish(variables.annotee)
-    variables.pub_points.publish(variables.points)'''
+    variables.pub_points.publish(variables.points)
 
     res = identificationResponse()
     res.point = variables.points
@@ -171,9 +200,7 @@ def identify(msg):
 ##########       GUI INTERFACE       #########
 ##############################################
 
-def imgNumEvent(val):
-    variables.imgNum = val
-
+#### Parameters for the circle identification ####
 def blurEvent(val):
     variables.blur = (val//2)*2+1
 
@@ -194,99 +221,105 @@ def minREvent(val):
 
 def maxREvent(val):
     variables.maxR = val
+#### Parameters for the circle identification ####
 
-def changeMethodEvent(val):
-    variables.opencv = val
 
+# Gain applied to the image
 def gainEvent(val):
     variables.gain = val
     write_cognex("SIG003", variables.gain)
 
+# Selection of the method to apply
+def changeMethodEvent(val):
+    variables.opencv = False if val==0 else True
+
+# Weither to simply acquire an image or to also apply identification 
 def identificationEvent(val):
     variables.identification = False if val==0 else True
 
+# Save of the current acquired image
 def saveEvent(val):
     img = get_image()
     reloadImg(img, save=True)
 
-def printCircles(img,ptx,pty,rayon):
-    if (variables.get_type(rayon) == 1) :
-        cv.circle(img,(ptx,pty),rayon,(0,255,0),4)
-
-    elif(variables.get_type(rayon) == 2) :
-        cv.circle(img,(ptx,pty),rayon,(255,0,0),4)
-
-    elif(variables.get_type(rayon) == 3) :
-        cv.circle(img,(ptx,pty),rayon,(255,255,0),4)
-
-    elif(variables.get_type(rayon) == 4) :
-        cv.circle(img,(ptx,pty),rayon,(255,0,255),4)
-
-    else:
-        cv.circle(img,(ptx,pty),rayon,(0,0,255),4)
-        print("rayon erreur :" + str(rayon))
-
-    cv.circle(img,(ptx,pty),2,(0,0,255),6)
-	
+# Display the circles found in the image
+def printCircles(img, ptx, pty, rayon):
+    # Use of a different color for each type of circles
+    cv.circle(img, (ptx,pty), rayon, variables.get_color(rayon), 4)
+    cv.circle(img, (ptx,pty), 2, (0,0,255), 6)
 
 def reloadImg(img, save=False):
+    # Resize image so it can be display on screen
     width = int(img.shape[1] * variables.scale_percent)
     height = int(img.shape[0] * variables.scale_percent)
-    if (variables.ip=="192.168.1.100"):
-  	    dsize = (width, height)
-    else:
-	    dsize = (img.shape[1], img.shape[0])
+    dsize = (width, height)
 
-
+    # If identification needs to be performed
     if(variables.identification):
+        # If the selected method is OpenCV
         if(variables.opencv):
-            imgOrg= img.copy()
+            # Change to grayscale
             imgGray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+            # Apply a median blur
             imgGray = cv.medianBlur(imgGray, variables.blur)
+
+            # Find circles in the image
             circles = cv.HoughCircles(imgGray, cv.HOUGH_GRADIENT, variables.dp, variables.minDist,
                                         param1=variables.p1, param2=variables.p2, minRadius=variables.minR, maxRadius=variables.maxR)
-            if(not(circles is None)):
-                circles = np.uint16(np.around(circles))
-                for i in circles[0,:]:
-                    printCircles(img,i[0],i[1],i[2])
-    else:
-        nbDetected = int(float(read_cognex("GVA026")))
-        # rospy.loginfo(nbDetected)
-        # Case A26 = nombre de points détecté par in-sight
-        # caseCognex=29 car dans le tableur, les trous détecté commence à cette case dans notre cas
-        for i in range(0,nbDetected):
-            caseCognex = 29 + i*3
-            if caseCognex <100:
-                ptx = int(float(read_cognex("GVB0"+str(caseCognex))))
-                pty = int(float(read_cognex("GVC0"+str(caseCognex))))
-                ptr = int(float(read_cognex("GVD0"+str(caseCognex))))
-            else:
-                ptx = int(float(read_cognex("GVB"+str(caseCognex))))
-                pty = int(float(read_cognex("GVC"+str(caseCognex))))
-                ptr = int(float(read_cognex("GVD"+str(caseCognex))))
-            printCircles(img,pty,ptx,ptr)
-		
 
+            if(circles is not None):
+                circles = np.uint16(np.around(circles))
+                # Display the circles found in the image
+                for i in circles[0,:]:
+                    printCircles(img, i[0], i[1], i[2])
+
+        # If the selected method is In-Sight
+        else:
+            # Get the number of detected circles in image
+            nbDetected = int(float(read_cognex("GVA026")))
+            # Get the x,y pixel position with the associed radius
+            for i in range(0,nbDetected):
+                caseCognex = 29 + i*3
+                try:
+                    if caseCognex < 100:
+                        ptx = int(float(read_cognex("GVB0"+str(caseCognex))))
+                        pty = int(float(read_cognex("GVC0"+str(caseCognex))))
+                        ptr = int(float(read_cognex("GVD0"+str(caseCognex))))
+                    else:
+                        ptx = int(float(read_cognex("GVB"+str(caseCognex))))
+                        pty = int(float(read_cognex("GVC"+str(caseCognex))))
+                        ptr = int(float(read_cognex("GVD"+str(caseCognex))))
+                    # Display the circles found in the image
+                    printCircles(img,pty,ptx,ptr)
+                except (ValueError, TypeError):
+                    print("#ERR")
+			
+		
+    # If the image has to be saved
     if(save):
         cv.imwrite("%s/capture.jpg" % variables.dir, img)
 
-    return cv.resize(img,dsize)
+    return cv.resize(img, dsize)
 
 
 
 
 
 
-
+# Initialize the node
 rospy.init_node('camera', anonymous=False)
+# Initialize the topics
 variables.pub_ok = rospy.Publisher("camera/camera_ok", Bool, queue_size=10)
 variables.pub_originale = rospy.Publisher("camera/image_originale", Image, queue_size=10)
 variables.pub_annotee = rospy.Publisher("camera/image_annotee", Image, queue_size=10)
 variables.pub_points = rospy.Publisher("camera/image_points", Liste_points, queue_size=10)
+# Connect to the camera
 cognex_connect()
+# Initialize the services
 s1 = rospy.Service("camera/capture", capture, detection)
 s2 = rospy.Service("camera/identification", identification, identify)
 
+# Create panel with sliders if render in True
 if variables.render:
 	cv.namedWindow('Identification')
 	cv.resizeWindow('Identification', 800, 200)
@@ -302,39 +335,40 @@ if variables.render:
 	cv.createTrackbar('identification', 'Identification', variables.identification, 1, identificationEvent)
 	cv.createTrackbar('save', 'Identification', 0, 1, saveEvent)
 
+# Initialize frame time
 prev_frame_time = time.time()
 new_frame_time = 0
-#cap = cv.VideoCapture(0)
-
 while(not rospy.is_shutdown()):
-	if variables.render :
-	    img = get_image()
-	    # img = cv.imread('/home/vm/Documents/image1.bmp')
-	    img = reloadImg(img, save=False)
+    if variables.render :
+        # Get image from the camera
+        img = get_image()
+        img = reloadImg(img, save=False)
+        
+        # Update frame time, compute and display fps
+        new_frame_time = time.time() 
+        fps = 1/(new_frame_time-prev_frame_time) 
+        fps = str(int(fps))
+        prev_frame_time = new_frame_time
+        cv.putText(img, fps, (7, 70), cv.FONT_HERSHEY_SIMPLEX, 3, (100, 255, 0), 3, cv.LINE_AA)
+        
+        # Read orientation of the if available
+        if variables.plaque == "Plate":
+            cv.putText(img, read_cognex("GVE160"), (765, 750), cv.FONT_HERSHEY_SIMPLEX, 3, (255, 100, 0), 3, cv.LINE_AA)
+        else:
+            cv.putText(img, read_cognex("GVE178"), (765, 750), cv.FONT_HERSHEY_SIMPLEX, 3, (255, 100, 0), 3, cv.LINE_AA)
+        
+        # Display the resulting frame
+        cv.imshow('frame',img)
+        
+        # Close windows if "q" is pressed
+        if cv.waitKey(1) & 0xFF == ord('q'):
+            break
 
-	    new_frame_time = time.time() 
-	  
-	    fps = 1/(new_frame_time-prev_frame_time) 
-	    
-	    prev_frame_time = new_frame_time 
 
-	    fps = int(fps) 
-	    fps = str(fps) 
-
-	    # Display the resulting frame
-	    if variables.plaque == "Plate":
-		    cv.putText(img, re.sub(r"^Présent", "", str(read_cognex("GVE160"))), (775, 750), cv.FONT_HERSHEY_SIMPLEX, 3, (255, 100, 0), 3, cv.LINE_AA)
-		    cv.putText(img, str(read_cognex("GVF160")), (500, 750), cv.FONT_HERSHEY_SIMPLEX, 3, (100, 100, 0), 3, cv.LINE_AA)
-	    else:
-		    cv.putText(img, str(read_cognex("GVE177")), (775, 750), cv.FONT_HERSHEY_SIMPLEX, 3, (255, 100, 0), 3, cv.LINE_AA)
-		    cv.putText(img, str(read_cognex("GVF177")), (500, 750), cv.FONT_HERSHEY_SIMPLEX, 3, (100, 100, 0), 3, cv.LINE_AA)
-	    cv.putText(img, fps, (7, 70), cv.FONT_HERSHEY_SIMPLEX, 3, (100, 255, 0), 3, cv.LINE_AA)
-	    cv.imshow('frame',img)
-
-	    if cv.waitKey(1) & 0xFF == ord('q'):
-		    break
-
-# When everything done, release the capture
-#cap.release()
+# We put the system offline
+variables.tn.write("SO0\r\n")
+# Log info to see what is happening
+rospy.loginfo("Com OK: "+str(variables.tn.expect(["0\r\n", "1\r\n"], timeout=3)[2]))
+# Create panel with sliders if render in True
 if variables.render:
 	cv.destroyAllWindows()

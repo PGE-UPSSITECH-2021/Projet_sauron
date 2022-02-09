@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import rospy
 from std_msgs.msg import String
-from motoman_hc10_moveit_config.msg import IHM_msg
+from deplacement_robot.msg import IHM_msg
 
 def extract_action(data):
     return data.action
