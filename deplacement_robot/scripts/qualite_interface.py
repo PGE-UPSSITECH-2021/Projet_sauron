@@ -6,9 +6,11 @@ import cv2
 def fonction_qualite(rayon_attendu,image_raw,debug,showResult = True):
     #calcul a la mainm pas fiable.
     px_to_mm = 0.04624277456
-    mm_to_px = 21.625
-    rayon_attendu = rayon_attendu*mm_to_px  #ici on bosse en px
+    mm_to_px = 21
+    rayon_attendu_px = rayon_attendu*mm_to_px*2  #ici on bosse en px
     #image = cv2.resize(image,(520,388))
+
+   
 
     if(debug):
         cv2.imshow('RAW',cv2.resize(image_raw,(520,388)))
@@ -27,7 +29,7 @@ def fonction_qualite(rayon_attendu,image_raw,debug,showResult = True):
 
 
 
-    isdefective, defect, contours = analyseContour.caracterization(cv2.cvtColor(image_processed,cv2.COLOR_GRAY2RGB),rayon_attendu,px_to_mm,affichage=False)
+    isdefective, defect, contours = analyseContour.caracterization(cv2.cvtColor(image_processed,cv2.COLOR_GRAY2RGB),rayon_attendu_px,px_to_mm,affichage=False)
 
     print("image raw")
     if(isdefective):
@@ -37,8 +39,10 @@ def fonction_qualite(rayon_attendu,image_raw,debug,showResult = True):
     
     
     if(showResult):
+	print("===========================DIAM ATTENDU : "+str(rayon_attendu*2)+"(px:)"+str(rayon_attendu_px)+"===========================")
         cv2.imshow('RESULT',cv2.resize(image_result,(520,388)))
-	cv2.waitKey(0)
+	
+	#cv2.waitKey(0)
 
     return isdefective, defect, image_result
 

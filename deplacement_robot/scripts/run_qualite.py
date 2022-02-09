@@ -45,7 +45,7 @@ def run_qualite(plaque_pos, nom_plaque, step_folder, dist =  0.18, diametres = [
         
         # Le robot se deplace au point p
         resp1 = move_robot(p[0])
-        time.sleep(2)
+        #time.sleep(2)
 
         trou_qualite_msg = Trou_qualite()
 

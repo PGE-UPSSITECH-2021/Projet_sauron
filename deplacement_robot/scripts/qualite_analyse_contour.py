@@ -70,20 +70,8 @@ class Cercle(Contour):
         """
         out : [x,y,rayon] cercle obtenu par transformation de hough
         """
-        method = cv2.HOUGH_GRADIENT
-        dp = 1 #0.5 : step 2 fois plus grand que resolution image. 2 : step 2 fois plus petit que resolution image
-        minDist = 100000 #distance minimale entre cercles detectes (detecter cercle unique si assez grand, voir aucun si trop grand) mais le premier est conserve...
-        param1 = 1#	seuil superieur donne a canny (seuil inf= moitie seuil sup)
-        param2 = 1# seuil inferieur utilise pour mecanisme de vote (si bas, des faux cercles sont detectes)
-        minRadius = 0#seuil inf des cercles recherches
-        maxRadius = 0#seuil sup des cercles recherches (si <=0 utilise +gde dimension de l'image, si <0, retourne centres sans donner de rayons)
-        circles = cv2.HoughCircles(self.getImGrey(),method,dp,minDist,param2 = param2) #liste de tuples contenant coordonnees cercles et votes
-        assert circles is not None,"Pas de cercle trouve"
-        assert len(circles.shape) == 3 and circles.shape[0] == 1 and circles.shape[1] == 1 and circles.shape[2] == 3,"Plusieurs cercles trouves"
-        x_circle = int(np.round(circles[:1,:1,0:1]))
-        y_circle = int(np.round(circles[:1,:1,1:2]))
-        r_circle = int(np.round(circles[:1,:1,2:3]))
-        return x_circle,y_circle,r_circle
+	(x,y),radius = cv2.minEnclosingCircle(self.getContour()[0])
+        return int(np.round(x)),int(np.round(y)),int(np.round(radius))
         
     def getXCircle(self):
         return self.__x_circle
@@ -137,49 +125,56 @@ class analyseContour:
         circle = analyseContour.__cercle(image)
         contours,xbar,ybar,aire,moments = analyseContour.__contour(image)
         #caracterisation :
-
+	minprct =  0.85
+	maxprct =  1.15
         #entre hough et les contours (la forme est-elle obstruee ou fissuree ?)
-        if (aire < 0.94*np.pi*((circle[2])**2)):
+        if (aire < minprct*np.pi*((circle[2])**2)):
+	    print(aire," vs ",minprct*np.pi*((circle[2])**2))
             isdefective = True
-            defect += "obstruction"# (area of circle > area of real hole) ({}>{})\n".format(float(np.pi*((circle[2])**2)),aire)
-        if (aire > 1.06*np.pi*((circle[2])**2)):
+            defect += "obstruction (area of circle > area of real hole) ({}>{})\n".format(float(np.pi*((circle[2])**2)),aire)
+        if (aire > maxprct*np.pi*((circle[2])**2)):
+	    print(aire," vs ",maxprct*np.pi*((circle[2])**2))
             isdefective=True
-            defect += "tear "# (area of real hole > area of circle) ({}>{})\n".format(aire,float(np.pi*((circle[2])**2)))
+            defect += "tear (area of real hole > area of circle) ({}>{})\n".format(aire,float(np.pi*((circle[2])**2)))
         
-        if(moments['nu20']< 0.96*1/(4*np.pi) or moments['nu20']>1.04*1/(4*np.pi)):
+        if(moments['nu20']< minprct*1/(4*np.pi) or moments['nu20']>1.04*1/(4*np.pi)):
             isdefective = True
-            #defect += "issue with nu20 moment\n"
+            defect += "issue with nu20 moment\n"
 
-        if(moments['nu02']< 0.96*1/(4*np.pi) or moments['nu02']>1.04*1/(4*np.pi)):
+        if(moments['nu02']< minprct*1/(4*np.pi) or moments['nu02']>1.04*1/(4*np.pi)):
             isdefective = True
-            #defect += "issue with nu02 moment\n"   
+            defect += "issue with nu02 moment\n"   
 
         if(abs(moments['nu11'])>10**-2):
             isdefective=True
-            #defect += "issue with nu11 moment\n"
+            defect += "issue with nu11 moment\n"
 
         if(abs(moments['nu21'])>10**-3):
             isdefective=True
-            #defect += "issue with nu21 moment\n"
+            defect += "issue with nu21 moment\n"
 
         if(abs(moments['nu12'])>10**-3):
             isdefective=True
-            #defect += "issue with nu12 moment\n"
+            defect += "issue with nu12 moment\n"
 
         if(abs(moments['nu30'])>10**-3):
             isdefective=True
-            #defect += "issue with nu30 moment\n"
+            defect += "issue with nu30 moment\n"
 
         if(abs(moments['nu03'])>10**-3):
             isdefective=True
-            #defect += "issue with nu03 moment\n"
+            defect += "issue with nu03 moment\n"
 
         #entre hough et le parametre de la fonction (le rayon en parametre est-il correct ?)
-        if (circle[2]*0.9<=rayon<=circle[2]*1.1):
-            pass
-        else:
+	minprct = 0.85
+	maxprct = 1.15
+
+        if (circle[2]*minprct>rayon):
+	    isdefective=True
+            defect += "radius too small, wanted : {} but got : {}".format(rayon,float(circle[2]))  # function parameter/cercle ({}/{})\n".format(rayon,float(circle[2]))
+	elif(rayon>circle[2]*maxprct):
             isdefective=True
-            defect += "radius mismatch {}/{}".format(rayon*px_to_mm,float(circle[2])*px_to_mm)  # function parameter/cercle ({}/{})\n".format(rayon,float(circle[2]))
+            defect += "radius too big, wanted : {} but got : {}".format(rayon,float(circle[2]))  # function parameter/cercle ({}/{})\n".format(rayon,float(circle[2]))
         
 
         if affichage:
