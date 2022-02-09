@@ -60,7 +60,7 @@ def run_qualite(plaque_pos, nom_plaque, step_folder, dist =  0.18, diametres = [
         isdefective, defect, image = fonction_qualite(p[1],cv_image,debug=False)
 
 
-        image_ros_result = bridge.cv2_to_imgmsg(image, 'bgr8')
+        image_ros_result = bridge.cv2_to_compressed_imgmsg(image)
 
         trou_qualite_msg.x= p[2][0]
         trou_qualite_msg.y= p[2][1]
