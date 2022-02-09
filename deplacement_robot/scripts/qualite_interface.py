@@ -42,7 +42,7 @@ def fonction_qualite(rayon_attendu,image_raw,debug,showResult = True):
 	print("===========================DIAM ATTENDU : "+str(rayon_attendu*2)+"(px:)"+str(rayon_attendu_px)+"===========================")
         cv2.imshow('RESULT',cv2.resize(image_result,(520,388)))
 	
-	cv2.waitKey(0)
+	#cv2.waitKey(0)
 
     return isdefective, defect, image_result
 
