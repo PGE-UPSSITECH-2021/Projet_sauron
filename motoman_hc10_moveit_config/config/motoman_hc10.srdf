@@ -37,7 +37,8 @@
         <joint name="joint_5_b" value="2.5312442" />
         <joint name="joint_6_t" value="2.4302742" />
     </group_state>
-    <group_state name="calibration" group="manipulator">
+    <!--POSITIONS CALIBRATIONS A DEFINIR#################################################################""-->
+    <group_state name="calibration_1" group="manipulator">
         <joint name="joint_1_s" value="1.65806" />
         <joint name="joint_2_l" value="0.628319" />
         <joint name="joint_3_u" value="3.08923" />
@@ -45,6 +46,79 @@
         <joint name="joint_5_b" value="-2.47837" />
         <joint name="joint_6_t" value="-0.0872665" />
     </group_state>
+    <group_state name="calibration_2" group="manipulator">
+        <joint name="joint_1_s" value="1.65806" />
+        <joint name="joint_2_l" value="0.628319" />
+        <joint name="joint_3_u" value="3.08923" />
+        <joint name="joint_4_r" value="0" />
+        <joint name="joint_5_b" value="-2.47837" />
+        <joint name="joint_6_t" value="-0.0872665" />
+    </group_state>
+    <group_state name="calibration_3" group="manipulator">
+        <joint name="joint_1_s" value="1.65806" />
+        <joint name="joint_2_l" value="0.628319" />
+        <joint name="joint_3_u" value="3.08923" />
+        <joint name="joint_4_r" value="0" />
+        <joint name="joint_5_b" value="-2.47837" />
+        <joint name="joint_6_t" value="-0.0872665" />
+    </group_state>
+    <group_state name="calibration_4" group="manipulator">
+        <joint name="joint_1_s" value="1.65806" />
+        <joint name="joint_2_l" value="0.628319" />
+        <joint name="joint_3_u" value="3.08923" />
+        <joint name="joint_4_r" value="0" />
+        <joint name="joint_5_b" value="-2.47837" />
+        <joint name="joint_6_t" value="-0.0872665" />
+    </group_state>
+    <group_state name="calibration_5" group="manipulator">
+        <joint name="joint_1_s" value="1.65806" />
+        <joint name="joint_2_l" value="0.628319" />
+        <joint name="joint_3_u" value="3.08923" />
+        <joint name="joint_4_r" value="0" />
+        <joint name="joint_5_b" value="-2.47837" />
+        <joint name="joint_6_t" value="-0.0872665" />
+    </group_state>
+    <group_state name="calibration_6" group="manipulator">
+        <joint name="joint_1_s" value="1.65806" />
+        <joint name="joint_2_l" value="0.628319" />
+        <joint name="joint_3_u" value="3.08923" />
+        <joint name="joint_4_r" value="0" />
+        <joint name="joint_5_b" value="-2.47837" />
+        <joint name="joint_6_t" value="-0.0872665" />
+    </group_state>
+    <group_state name="calibration_7" group="manipulator">
+        <joint name="joint_1_s" value="1.65806" />
+        <joint name="joint_2_l" value="0.628319" />
+        <joint name="joint_3_u" value="3.08923" />
+        <joint name="joint_4_r" value="0" />
+        <joint name="joint_5_b" value="-2.47837" />
+        <joint name="joint_6_t" value="-0.0872665" />
+    </group_state>
+    <group_state name="calibration_8" group="manipulator">
+        <joint name="joint_1_s" value="1.65806" />
+        <joint name="joint_2_l" value="0.628319" />
+        <joint name="joint_3_u" value="3.08923" />
+        <joint name="joint_4_r" value="0" />
+        <joint name="joint_5_b" value="-2.47837" />
+        <joint name="joint_6_t" value="-0.0872665" />
+    </group_state>
+    <group_state name="calibration_9" group="manipulator">
+        <joint name="joint_1_s" value="1.65806" />
+        <joint name="joint_2_l" value="0.628319" />
+        <joint name="joint_3_u" value="3.08923" />
+        <joint name="joint_4_r" value="0" />
+        <joint name="joint_5_b" value="-2.47837" />
+        <joint name="joint_6_t" value="-0.0872665" />
+    </group_state>
+    <group_state name="calibration_10" group="manipulator">
+        <joint name="joint_1_s" value="1.65806" />
+        <joint name="joint_2_l" value="0.628319" />
+        <joint name="joint_3_u" value="3.08923" />
+        <joint name="joint_4_r" value="0" />
+        <joint name="joint_5_b" value="-2.47837" />
+        <joint name="joint_6_t" value="-0.0872665" />
+    </group_state>
+
     <group_state name="parcking" group="manipulator">
         <joint name="joint_1_s" value="0.18" />
         <joint name="joint_2_l" value="0.0886" />
