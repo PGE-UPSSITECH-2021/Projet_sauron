@@ -15,6 +15,7 @@ add_service_files(
   Speed_percentage.srv
   Robot_do_square.srv
   Robot_set_state.srv
+  Get_fk.srv
 )
 
 add_message_files(
