@@ -156,6 +156,7 @@ def run():
 		###########################################
 
 		def run_location(loc_ok, id_ok, qual_ok):
+			robot.set_robot_state("EN PRODUCTION")
 
 			# Reset all states
 			loc_ok = id_ok = qual_ok = False
@@ -164,11 +165,13 @@ def run():
 			#loc_ok = ndt.dummy_location()
 			loc_ok = robot.execute_localisation(nom_plaque=get_plaqueName(ihm_msg))
 
+			robot.fin_prod()
+
 			# Return states
 			return loc_ok, id_ok, qual_ok
 
 		def run_identification(loc_ok, id_ok, qual_ok):
-
+			robot.set_robot_state("EN PRODUCTION")
 			# Run loc service if previous loc state reset
 			while not loc_ok:
 				loc_ok, id_ok, qual_ok = run_location(loc_ok, id_ok, qual_ok)
@@ -182,10 +185,13 @@ def run():
 			# Run id service and get id state
 			id_ok = robot.execute_identification(nom_plaque=get_plaqueName(ihm_msg), diametres=get_diametres(ihm_msg))
 
+			robot.fin_prod()
+
 			# Return states
 			return loc_ok, id_ok, qual_ok
 
 		def run_quality(loc_ok, id_ok, qual_ok):
+			robot.set_robot_state("EN PRODUCTION")
 
 			# Run id service if previous id state reset
 			# Will run loc service if previous loc state reset
@@ -200,6 +206,8 @@ def run():
 
 			# Run qual service and get qual state
 			qual_ok = robot.execute_qualite(nom_plaque=get_plaqueName(ihm_msg), diametres=get_diametres(ihm_msg))
+
+			robot.fin_prod()
 
 			# Return states
 			return loc_ok, id_ok, qual_ok

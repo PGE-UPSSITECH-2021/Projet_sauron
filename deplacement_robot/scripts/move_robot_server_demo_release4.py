@@ -3,7 +3,7 @@
 import sys
 import rospy
 import moveit_commander
-from deplacement_robot.srv import Robot_move, Robot_move_predef, Speed_percentage, Robot_do_square, Robot_set_state
+from deplacement_robot.srv import Robot_move, Robot_move_predef, Speed_percentage, Robot_do_square, Robot_set_state, Get_fk
 import useful_robot
 import copy
 from std_msgs.msg import String
@@ -80,7 +80,7 @@ class Move_robot:
         pose = useful_robot.get_fk()
         print(pose)
         print(useful_robot.pose_msg_to_homogeneous_matrix(pose))
-        return True
+        return pose
 
     def handler_set_speed_perentage(self, msg):
         self.set_speed(msg.speed_percentage)
@@ -136,13 +136,14 @@ class Move_robot:
         s7 = s = rospy.Service('move_robot_lin', Robot_move, self.handler_robot_move_lin)
         rospy.loginfo("Server move robot ready !")
 
-        s_fk = rospy.Service('get_fk', Robot_move_predef, self.handler_get_fk)
+        s_fk = rospy.Service('get_fk', Get_fk, self.handler_get_fk)
 
         s_speed = rospy.Service('set_speed_percentage', Speed_percentage, self.handler_set_speed_perentage)
 
         s_state = rospy.Service("set_robot_state", Robot_set_state, self.set_state)
 
         rospy.loginfo("Robot ready to move !")
+        
 
     def move_predef(self, conf_name):
         target = self.group.get_named_target_values(conf_name)
