@@ -5,12 +5,14 @@ import time
 from matplotlib import pyplot as plt
 
 def fonction_qualite(rayon_attendu,image_raw,debug,showResult = True,fast_algo= True):
-    #calcul a la mainm pas fiable.
+    #calcul a la main pas fiable.
     start_time = time.time()
 
     px_to_mm = 0.04624277456
     mm_to_px = 21
-    rayon_attendu_px = rayon_attendu*mm_to_px*2  #ici on bosse en px
+    rayon_attendu_px = int(rayon_attendu*mm_to_px*2)  #ici on bosse en px
+    if(fast_algo):
+	rayon_attendu_px=int(rayon_attendu_px/5)
     #image = cv2.resize(image,(520,388))
 
     if(fast_algo):
@@ -29,6 +31,9 @@ def fonction_qualite(rayon_attendu,image_raw,debug,showResult = True,fast_algo= 
     image_processed,offset_,nohole=filtrage.preprocess(image_raw,fast_algo)
 	
     if(nohole):
+        plt.imshow(cv2.resize(image_result,(520,388)))
+        plt.draw()
+        plt.pause(0.001)
         return True,"Trou non detecte",image_raw
 	
 
@@ -44,9 +49,11 @@ def fonction_qualite(rayon_attendu,image_raw,debug,showResult = True,fast_algo= 
     if(fast_algo):
         px_size = 5
 
+    assert(contours is not None)
+
     print("image raw")
     if(isdefective):
-        image_result = cv2.drawContours(image_raw, contours, -1, (0,0,255), px_size,offset=offset_)
+        image_result = cv2.drawContours(image_raw, contours, -1, (255,0,0), px_size,offset=offset_)
     else:
         image_result= cv2.drawContours(image_raw, contours, -1, (0,255,0), px_size,offset=offset_)
     
