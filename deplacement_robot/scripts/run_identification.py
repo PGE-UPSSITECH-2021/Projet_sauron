@@ -9,12 +9,9 @@ from communication.srv import identification
 from deplacement_robot.msg import Identification, Trou_identification
 from  geometry_msgs.msg import Pose
 
-# TODO Fusion de donnees
-# TODO Traiter que les points vouluent
-# TODO Appel du service
-# TODO Message ROS
+import matplotlib.plot as plt
 
-def run_identification(plaque_pos, nom_plaque, step_folder, diametres, global_picture, intrinsic=np.eye(3), dist =  0.93, seuil=100):
+def run_identification(plaque_pos, nom_plaque, step_folder, diametres, dist =  0.93, seuil=100):
     # Lecture du fichier step et recuperation des trous
     cylinders_dict = get_cylinders(step_folder + "/" + str(nom_plaque) + ".stp")
 
@@ -34,66 +31,64 @@ def run_identification(plaque_pos, nom_plaque, step_folder, diametres, global_pi
 
     move_parcking()
 
-    result_msg = Identification()
     res_points = []
+    res_image_originale = []
+    res_image_annotee = []
+    decalage = 300
 
-    # DEBUG
-    nbTrousTraite = 0
+
+    type_plaque = "Plate"
+
+    if len(poses) > 1:
+        type_plaque = "Courbee"
 
     for pose in poses:
         if rospy.is_shutdown():
             exit()
         
-        resp1 = move_robot(pose[0])
+        res_move = move_robot(pose)
 
-        '''# Récupération de la postion de la caméra
-        pos_cam = pose_msg_to_homogeneous_matrix(get_fk())
-        # Point devant être pris en compte (2D, 3D)
-        points = []
-
-        for point in pose[1]:
-            # Passage du point dans le repère image
-            p = get_points_projection(intrinseques, extrinseques, point)
-            points.append[(p, point)]
-
-        res_identification = identification_srv()
-
-        for point in res_identification.points.points:
-            if rospy.is_shutdown():
-                exit()
-
-            # On traite que les trous qui ont le bon diametre
-            if point.type in diametres :
-                Pi = np.array([point.x, point.y])
-                for p in points:
-                    # On verifie si le trous est bien un de ceux dont on est en face
-                    Pc = np.array(p[0])
-                    if np.linalg.norm(Pi-Pc) <= seuil:
-                        dict_point[tuple(p[1])] = point.type
-                        # DEBUG
-                        nbTrousTraite += 1
-                        pr = Trou_identification()
-                        pr.x = p[1][0]
-                        pr.x = p[1][1]
-                        pr.diametre = point.type
-                        res_points.append(pr)
-                        break'''
+        if not res_move.res :
+            rospy.logwarn("Point inategnable. Passage au point suivant.")
+            res_points.append([])
+            res_image_originale.append(np.zeros((1944,decalage)))
+            res_image_annotee.append(np.zeros((1944,decalage)))
+        else:
+            res_identification = identification_srv(type_plaque)
+            res_points.append(res_identification.points.points)
+            res_image_originale.append(res_identification.originale)
+            res_image_annotee.append(res_identification.annotee)
 
         print("press enter")
         raw_input()
-
-    if rospy.is_shutdown():
-        exit()
-
-    # DEBUG
-    print("nbTrousTraite : " + str(nbTrousTraite))
-
-    if rospy.is_shutdown():
-        exit()
-
+    
     move_parcking()
 
-    return result_msg
+    image_annotee = np.hstack(res_image_annotee)
+    image_originale = np.hstack(res_image_originale)
+
+    points_msg = []
+    trous = []
+
+    for i,points in enumerate(res_points):
+        for point in points:
+            if rospy.is_shutdown():
+                exit()
+
+            p = Trou_identification()
+            p.x = point.x
+            p.y = point.y + i * decalage
+            p.diametre = point.type
+
+            trous.append((p.x,p.y))
+
+    msg = Identification()
+    msg.trous = points_msg
+    msg.image = bridge.cv2_to_compressed_imgmsg(image_annotee)
+
+    plt.imshow(image_annotee)
+
+    return result_msg, (image_originale, trous)
 
 def get_points_projection(intrinsic, extrinsic, P0):
     # [xi,yi,1] = 1/z*[intrinseque].[extrinseque].[point]
@@ -104,6 +99,7 @@ def get_points_projection(intrinsic, extrinsic, P0):
 
 def get_poses(cylinders_dict, plaque_pos, dist):
     poses = []
+    poses_d = {}
 
     for key in cylinders_dict:
         cylinders = cylinders_dict[key]
@@ -128,10 +124,15 @@ def get_poses(cylinders_dict, plaque_pos, dist):
 
         r = get_orientation_mat(v)
 
-        p = np.hstack((r, p.T))
-        p = np.vstack((p, [0,0,0,1]))
-        msg = homogeneous_matrix_to_pose_msg(p)
-        poses.append((msg, point))
+        pt = np.hstack((r, p.T))
+        pt = np.vstack((pt, [0,0,0,1]))
+        msg = homogeneous_matrix_to_pose_msg(pt)
+
+        poses_d[tuple(p[0])] = msg
+        
+    keys = poses_d.keys()
+    for key in sorted(list(keys)):
+        poses.append(poses_d[key])
 
     return poses
 
@@ -167,4 +168,4 @@ if __name__ == "__main__":
     R[2,3] = -0.270 + 0.275
     rospack = rospkg.RosPack()
     cwd = rospack.get_path("deplacement_robot")
-    run_identification(R, "Plaque_1", cwd + "/plaques")
+    run_identification(R, "Plaque_2", cwd + "/plaques", [5,7,12,18])
