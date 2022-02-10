@@ -7,7 +7,6 @@ import rospkg
 from deplacement_robot.srv import Robot_move, Robot_move_predef, Robot_set_state
 from communication.srv import identification
 from deplacement_robot.msg import Identification, Trou_identification
-
 from  geometry_msgs.msg import Pose
 
 # TODO Fusion de donnees
@@ -47,7 +46,7 @@ def run_identification(plaque_pos, nom_plaque, step_folder, diametres, global_pi
         
         resp1 = move_robot(pose[0])
 
-        # Récupération de la postion de la caméra
+        '''# Récupération de la postion de la caméra
         pos_cam = pose_msg_to_homogeneous_matrix(get_fk())
         # Point devant être pris en compte (2D, 3D)
         points = []
@@ -78,7 +77,7 @@ def run_identification(plaque_pos, nom_plaque, step_folder, diametres, global_pi
                         pr.x = p[1][1]
                         pr.diametre = point.type
                         res_points.append(pr)
-                        break
+                        break'''
 
         print("press enter")
         raw_input()
