@@ -46,7 +46,7 @@ class Robot:
         while not self.aquitement and not rospy.is_shutdown():
             pub.publish(msg)
 
-    # Fonction pour changer l'état de la production
+    # Fonction pour changer l etat de la production
     def set_robot_state(self, state):
         self.serv_set_robot_state(state)
 
