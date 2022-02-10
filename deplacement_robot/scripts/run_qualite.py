@@ -12,7 +12,6 @@ from qualite_interface import fonction_qualite
 from  geometry_msgs.msg import Pose
 from deplacement_robot.msg import Qualite, Trou_qualite
 from cv_bridge import CvBridge
-import time
 
 def run_qualite(plaque_pos, nom_plaque, step_folder, dist =  0.18, diametres = [5,7,12,18]):
     # Lecture du fichier step et recuperation de tous les trous
@@ -57,7 +56,7 @@ def run_qualite(plaque_pos, nom_plaque, step_folder, dist =  0.18, diametres = [
         print("shape = ",cv_image.shape)
         assert (len(cv_image.shape) == 3),"(1) probleme dimensions, image BGR ?"
 
-        isdefective, defect, image = fonction_qualite(p[1],cv_image,debug=False)
+        isdefective, defect, image = fonction_qualite(p[1],cv_image,debug=False,fast_algo=True)
 
 
         image_ros_result = bridge.cv2_to_compressed_imgmsg(image)
