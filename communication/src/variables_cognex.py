@@ -6,9 +6,6 @@ class Variables:
 	def __init__(self):
 		# Publisher to be used
 		self.pub_ok = None
-		self.pub_originale = None
-		self.pub_annotee = None
-		self.pub_points = None
 		self.bridge = CvBridge()
 		
 		# Data structures to be used
@@ -27,10 +24,10 @@ class Variables:
 		self.password = ''
 
 		# Process parameters
-		self.identification = False
+		self.identification = True
 		self.opencv = True
 		self.render = False
-		self.plaque = "Courbe"
+		self.plaque = "Plate" # Plate, Courbee, Lourde, False
 
 		# Circle identification parameters
 		self.blur = 5

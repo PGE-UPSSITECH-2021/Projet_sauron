@@ -16,7 +16,7 @@ from communication.msg import Liste_points, Points
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 from communication.srv import capture
-from communication.srv import identification, identificationResponse 
+from communication.srv import identification, identificationResponse
 
 global variables
 variables = Variables()
@@ -53,7 +53,9 @@ def cognex_connect():
     variables.tn.read_until("Password: ", timeout=3)
     variables.tn.write("\r\n") 
     variables.tn.read_until("User Logged In\r\n", timeout=3)
-
+    
+    variables.tn.write("Put Live 1\r\n")
+    rospy.loginfo("Com OK: "+str(variables.tn.expect(["0\r\n", "1\r\n"], timeout=3)[2]))
     # We put online the system to be able to trigger the acquisition
     variables.tn.write("SO1\r\n")
     rospy.loginfo("Com OK: "+str(variables.tn.expect(["0\r\n", "1\r\n"], timeout=3)[2]))
@@ -93,19 +95,19 @@ def write_cognex(case, val):
 # Get image from the camera
 @check_connexion
 def get_image():
-    # Send an acquisition event and wait for it
-    variables.tn.write("SW8\r\n")
+	# Send an acquisition event and wait for it
+	variables.tn.write("SW8\r\n")
     # Log info to see what is happening
-    rospy.loginfo("Com OK: "+str(variables.tn.expect(["0\r\n", "1\r\n"], timeout=6)[2]))
+	rospy.loginfo("Com : SW8 -- Com OK: "+str(variables.tn.expect(["0\r\n", "1\r\n"], timeout=6)[2]))
 
     # Download file from cognex
-    filename = 'image.bmp'
-    lf = open(filename, "wb")
-    variables.ftp.retrbinary("RETR " + filename, lf.write)
-    lf.close()
-    img = cv.imread(filename)
+	filename = 'image.bmp'
+	lf = open(filename, "wb")
+	variables.ftp.retrbinary("RETR " + filename, lf.write)
+	lf.close()
+	img = cv.imread(filename)
 
-    return img
+	return img
 
 
 
@@ -125,13 +127,21 @@ def detection(msg):
         print(e)
 
     # Publish to the associated node(s) and also return value(s)
-    variables.pub_originale.publish(variables.originale)
     return variables.originale
 
 
 def identify(msg):
     # Get image from the camera
     img = get_image()
+    # Try using the OpenCV bridge to convert image to the right format
+    try:
+        bridge = CvBridge()
+        if(msg.plaque == "Courbee"):
+            variables.originale = bridge.cv2_to_imgmsg(img[:, (img.shape[1]/2) - 150:(img.shape[1]/2) + 150], "bgr8")
+        else:
+            variables.originale = bridge.cv2_to_imgmsg(img, "bgr8")
+    except CvBridgeError as e:
+        print(e)
 
     if(variables.opencv):
         # Change to grayscale
@@ -152,6 +162,7 @@ def identify(msg):
                 variables.points[-1].x = i[0]
                 variables.points[-1].y = i[1]
                 variables.points[-1].type = variables.get_type(i[2])
+                printCircles(img, i[0], i[1], i[2])
 
     # If the selected method is In-Sight
     else:
@@ -175,14 +186,20 @@ def identify(msg):
                 variables.points[-1].x = ptx
                 variables.points[-1].y = pty
                 variables.points[-1].type = variables.get_type(ptr)
+                printCircles(img,pty,ptx,ptr)
+
             except (ValueError, TypeError):
                 rospy.loginfo("#ERR when reading points locations")
 
-
-    # Publish to the associated node(s) and also return value(s)
-    variables.pub_originale.publish(variables.originale)
-    variables.pub_annotee.publish(variables.annotee)
-    variables.pub_points.publish(variables.points)
+    # Try using the OpenCV bridge to convert image to the right format
+    try:
+        bridge = CvBridge()
+        if(variables.plaque == "Courbee"):
+            variables.annotee = bridge.cv2_to_imgmsg(img[:, (img.shape[1]/2) - 150:(img.shape[1]/2) + 150], "bgr8")
+        else:
+            variables.annotee = bridge.cv2_to_imgmsg(img, "bgr8")
+    except CvBridgeError as e:
+        print(e)
 
     res = identificationResponse()
     res.point = variables.points
@@ -310,9 +327,6 @@ def reloadImg(img, save=False):
 rospy.init_node('camera', anonymous=False)
 # Initialize the topics
 variables.pub_ok = rospy.Publisher("camera/camera_ok", Bool, queue_size=10)
-variables.pub_originale = rospy.Publisher("camera/image_originale", Image, queue_size=10)
-variables.pub_annotee = rospy.Publisher("camera/image_annotee", Image, queue_size=10)
-variables.pub_points = rospy.Publisher("camera/image_points", Liste_points, queue_size=10)
 # Connect to the camera
 cognex_connect()
 # Initialize the services
@@ -338,28 +352,32 @@ if variables.render:
 # Initialize frame time
 prev_frame_time = time.time()
 new_frame_time = 0
+
 while(not rospy.is_shutdown()):
     if variables.render :
         # Get image from the camera
         img = get_image()
         img = reloadImg(img, save=False)
-        
+
         # Update frame time, compute and display fps
         new_frame_time = time.time() 
         fps = 1/(new_frame_time-prev_frame_time) 
         fps = str(int(fps))
         prev_frame_time = new_frame_time
         cv.putText(img, fps, (7, 70), cv.FONT_HERSHEY_SIMPLEX, 3, (100, 255, 0), 3, cv.LINE_AA)
-        
+
         # Read orientation of the if available
         if variables.plaque == "Plate":
             cv.putText(img, read_cognex("GVE160"), (765, 750), cv.FONT_HERSHEY_SIMPLEX, 3, (255, 100, 0), 3, cv.LINE_AA)
-        else:
+        elif variables.plaque == "Courbee":
             cv.putText(img, read_cognex("GVE178"), (765, 750), cv.FONT_HERSHEY_SIMPLEX, 3, (255, 100, 0), 3, cv.LINE_AA)
-        
+        elif variables.plaque == "Lourde":
+            cv.putText(img, read_cognex("GVE196"), (765, 750), cv.FONT_HERSHEY_SIMPLEX, 3, (255, 100, 0), 3, cv.LINE_AA)
+
+
         # Display the resulting frame
         cv.imshow('frame',img)
-        
+
         # Close windows if "q" is pressed
         if cv.waitKey(1) & 0xFF == ord('q'):
             break
