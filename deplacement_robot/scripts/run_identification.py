@@ -29,8 +29,6 @@ def run_identification(plaque_pos, nom_plaque, step_folder, diametres, dist =  0
     # Dictionnaire point 3D (x,y,z) : diametre
     dict_point = {}
 
-    move_parcking()
-
     res_points = []
     res_image_originale = []
     res_image_annotee = []
@@ -45,7 +43,7 @@ def run_identification(plaque_pos, nom_plaque, step_folder, diametres, dist =  0
     for pose in poses:
         if rospy.is_shutdown():
             exit()
-        
+        move_parcking()
         res_move = move_robot(pose)
 
         if not res_move.res :
