@@ -26,7 +26,7 @@ class Robot:
         self.step_folder = rospack.get_path("deplacement_robot") + "/plaques"
 
         self.pub_result = rospy.Publisher("result", Bool, queue_size=10)
-        self.pub_identification = rospy.Publisher("result/indentification", Identification, queue_size=10)
+        self.pub_identification = rospy.Publisher("result/identification", Identification, queue_size=10)
         self.pub_qualite = rospy.Publisher("result/qualite", Qualite, queue_size=10)
         self.pub_localisation = rospy.Publisher("result/localisation", Localisation, queue_size=10)
 
@@ -88,12 +88,12 @@ class Robot:
 
         #TODO : msg,self.H = run_localisation()
         msg = Localisation()
-        msg.x = 0.55
-        msg.y = 0.24
-        msg.z = 0.005
-        msg.a = 0
-        msg.b = 0
-        msg.g = 0
+        msg.x = float(0.55)
+        msg.y = float(0.24)
+        msg.z = float(0.005)
+        msg.a = float(0)
+        msg.b = float(0)
+        msg.g = float(0)
         self.plaque_pos = np.array([[1,0,0,0.55],
                                     [0,1,0,0.24],
                                     [0,0,1,0.005],

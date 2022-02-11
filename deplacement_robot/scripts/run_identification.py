@@ -171,4 +171,4 @@ if __name__ == "__main__":
     R[2,3] = -0.270 + 0.275
     rospack = rospkg.RosPack()
     cwd = rospack.get_path("deplacement_robot")
-    run_identification(R, "Plaque_1", cwd + "/plaques", [5,7,12,18])
+    run_identification(R, "Plaque_2", cwd + "/plaques", [5,7,12,18])
