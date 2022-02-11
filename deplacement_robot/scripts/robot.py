@@ -25,10 +25,10 @@ class Robot:
         rospack = rospkg.RosPack()
         self.step_folder = rospack.get_path("deplacement_robot") + "/plaques"
 
-        self.pub_result = rospy.Publisher("result", Bool, queue_size=20)
-        self.pub_identification = rospy.Publisher("result/indentification", Identification, queue_size=20)
-        self.pub_qualite = rospy.Publisher("result/qualite", Qualite, queue_size=20)
-        self.pub_localisation = rospy.Publisher("result/localisation", Localisation, queue_size=20)
+        self.pub_result = rospy.Publisher("result", Bool, queue_size=10)
+        self.pub_identification = rospy.Publisher("result/indentification", Identification, queue_size=10)
+        self.pub_qualite = rospy.Publisher("result/qualite", Qualite, queue_size=10)
+        self.pub_localisation = rospy.Publisher("result/localisation", Localisation, queue_size=10)
 
         self.srv_set_robot_state = rospy.ServiceProxy("set_robot_state", Robot_set_state)
 
@@ -43,7 +43,7 @@ class Robot:
     # Fonction pour envoyer un message jusqu a aquitement
     def spam_result(self, pub, msg):
         self.aquitement = False
-        rate = rospy.Rate(20)
+        rate = rospy.Rate(10)
         while not self.aquitement and not rospy.is_shutdown():
 			print("spam")
 			pub.publish(msg)
