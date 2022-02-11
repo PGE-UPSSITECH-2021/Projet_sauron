@@ -9,6 +9,7 @@ from std_msgs.msg import Bool, String
 from deplacement_robot.srv import Robot_set_state
 import moveit_commander
 import sys
+import time
 
 import numpy as np
 
@@ -24,7 +25,7 @@ class Robot:
         rospack = rospkg.RosPack()
         self.step_folder = rospack.get_path("deplacement_robot") + "/plaques"
 
-        self.pub_result = rospy.Publisher("result/", Bool, queue_size=20)
+        self.pub_result = rospy.Publisher("result", Bool, queue_size=20)
         self.pub_identification = rospy.Publisher("result/indentification", Identification, queue_size=20)
         self.pub_qualite = rospy.Publisher("result/qualite", Qualite, queue_size=20)
         self.pub_localisation = rospy.Publisher("result/localisation", Localisation, queue_size=20)
@@ -44,11 +45,12 @@ class Robot:
         self.aquitement = False
         rate = rospy.Rate(20)
         while not self.aquitement and not rospy.is_shutdown():
-            pub.publish(msg)
+			print("spam")
+			pub.publish(msg)
 
     # Fonction pour changer l etat de la production
     def set_robot_state(self, state):
-        self.serv_set_robot_state(state)
+        self.srv_set_robot_state(state)
 
     def fin_prod(self):
         group = moveit_commander.MoveGroupCommander("manipulator")
@@ -58,12 +60,16 @@ class Robot:
 
         parcking_list = []
         for k in sorted(keys):
-            parcking.append(d[k])        
+            parcking_list.append(parcking[k])        
 
         parcking_list = np.round(parcking_list, 3)
-        curent_state = np.round(groupget_current_joint_values(), 3)
+        curent_state = np.round(group.get_current_joint_values(), 3)
 
-        if (parcking_list == curent_state).all():
+	print(parcking_list)
+	print(curent_state)
+	print()
+
+        if np.linalg.norm(np.array(parcking_list) - np.array(curent_state)) <= 0.2:
             self.set_robot_state("LIBRE INIT")
         else:
             self.set_robot_state("LIBRE NON INIT")
@@ -93,6 +99,8 @@ class Robot:
                                     [0,0,1,0.005],
                                     [0,0,0,1]])
 
+	time.sleep(1)
+
         if send_result:
             self.pub_result.publish(True)
             self.spam_result(self.pub_localisation, msg)
@@ -108,7 +116,7 @@ class Robot:
         if self.nom_plaque != nom_plaque:
             self.execute_localisation(nom_plaque, send_result=False)
 
-        msg = run_identification(self.plaque_pos, nom_plaque, self.step_folder)
+        msg,_ = run_identification(self.plaque_pos, nom_plaque, self.step_folder, diametres) #TODO get image global
 
         if send_result:
             self.pub_result.publish(True)

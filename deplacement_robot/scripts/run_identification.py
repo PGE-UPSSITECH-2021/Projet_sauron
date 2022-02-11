@@ -85,8 +85,6 @@ def run_identification(plaque_pos, nom_plaque, step_folder, diametres, dist =  1
 
     msg.image = bridge.cv2_to_compressed_imgmsg(image_annotee)
 
-    print(image_annotee.shape)
-
     plt.imshow(image_annotee)
     plt.draw()
     plt.pause(0.001)

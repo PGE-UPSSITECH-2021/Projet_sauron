@@ -38,15 +38,14 @@ def get_diametres(msg):
 	if msg is None :
 		return []
 	diam_string = msg.diametre
-	diam_string = diam_string.split()
+	diam_string = diam_string.split('-')
 	diametres = []
 	for d in diam_string:
-		if not 'mm' in d:
-			diametres.append(float(d))
+		diametres.append(float(d))
 	return diametres
 
 # To write into a config file, loaded via json.load()
-TOPICS = {'IHM': {'name': 'ihm_topic', 'datatype': IHM_msg, 'callback': callback_ihm}}
+TOPICS = {'IHM': {'name': 'message_ihm_run', 'datatype': IHM_msg, 'callback': callback_ihm}}
 
 # Commands
 '''
@@ -155,7 +154,7 @@ def run():
 
 		###########################################
 
-		def run_location(loc_ok, id_ok, qual_ok):
+		def run_location(loc_ok, id_ok, qual_ok, send_result=True):
 			robot.set_robot_state("EN PRODUCTION")
 
 			# Reset all states
@@ -163,18 +162,18 @@ def run():
 
 			# Run loc service and get loc state
 			#loc_ok = ndt.dummy_location()
-			loc_ok = robot.execute_localisation(nom_plaque=get_plaqueName(ihm_msg))
+			loc_ok = robot.execute_localisation(nom_plaque=get_plaqueName(ihm_msg), send_result=send_result)
 
 			robot.fin_prod()
 
 			# Return states
 			return loc_ok, id_ok, qual_ok
 
-		def run_identification(loc_ok, id_ok, qual_ok):
+		def run_identification(loc_ok, id_ok, qual_ok, send_result=True):
 			robot.set_robot_state("EN PRODUCTION")
 			# Run loc service if previous loc state reset
 			while not loc_ok:
-				loc_ok, id_ok, qual_ok = run_location(loc_ok, id_ok, qual_ok)
+				loc_ok, id_ok, qual_ok = run_location(loc_ok, id_ok, qual_ok, send_result=False)
 
 			# Reset id, qual states
 			id_ok = qual_ok = False
@@ -183,7 +182,7 @@ def run():
 			assert loc_ok
 
 			# Run id service and get id state
-			id_ok = robot.execute_identification(nom_plaque=get_plaqueName(ihm_msg), diametres=get_diametres(ihm_msg))
+			id_ok = robot.execute_identification(nom_plaque=get_plaqueName(ihm_msg), diametres=get_diametres(ihm_msg), send_result=send_result)
 
 			robot.fin_prod()
 
@@ -196,7 +195,7 @@ def run():
 			# Run id service if previous id state reset
 			# Will run loc service if previous loc state reset
 			while not id_ok:
-				loc_ok, id_ok, qual_ok = run_identification(loc_ok, id_ok, qual_ok)
+				loc_ok, id_ok, qual_ok = run_identification(loc_ok, id_ok, qual_ok, send_result=False)
 
 			# Reset qual state
 			qual_ok = False
