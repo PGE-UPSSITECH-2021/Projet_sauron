@@ -79,9 +79,12 @@ def run_identification(plaque_pos, nom_plaque, step_folder, diametres, dist =  1
             p.diametre = point.type
 
             trous.append((p.x,p.y))
+            points_msg.append(p)
+
 
     msg = Identification()
     msg.trous = points_msg
+    msg.nbTrous = len(points_msg)
 
     msg.image = bridge.cv2_to_compressed_imgmsg(image_annotee)
 
@@ -171,4 +174,4 @@ if __name__ == "__main__":
     R[2,3] = -0.270 + 0.275
     rospack = rospkg.RosPack()
     cwd = rospack.get_path("deplacement_robot")
-    run_identification(R, "Plaque_2", cwd + "/plaques", [5,7,12,18])
+    run_identification(R, "Plaque_1", cwd + "/plaques", [5,7,12,18])
