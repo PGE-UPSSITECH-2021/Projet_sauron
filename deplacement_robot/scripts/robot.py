@@ -95,7 +95,8 @@ class Robot:
                 self.fin_prod()
             return False
 
-    def excute_qualibration(self):
+    # Fonction pour lancer la phase de calibration
+    def execute_calibration(self):
         self.set_robot_state("CALIBRATION")
 
         #TODO self.intrinsic, self.distorsion = run_calibration()
@@ -111,12 +112,6 @@ class Robot:
         np.savetxt(folder_path+"/saves/distorsion", self.distorsion)
 
         self.fin_prod()
-
-    # Fonction pour lancer la phase de calibration
-    def execute_calibration(self):
-        # TODO : self.intrinsic, self.distorsion = run_calibration()
-
-        return True
 
     # Fonction pour lancer la phase de localisation
     def execute_localisation(self, nom_plaque, send_result=True):
