@@ -55,7 +55,7 @@ def run_identification(plaque_pos, nom_plaque, step_folder, diametres, dist =  1
             res_image_originale.append(np.zeros((1944,decalage,3), dtype=np.uint8))
             res_image_annotee.append(np.zeros((1944,decalage,3), dtype=np.uint8))
         else:
-            res_identification = identification_srv(str(type_plaque))
+            res_identification = identification_srv(diametres, str(type_plaque))
             res_points.append(res_identification.points.points)
             res_image_originale.append(bridge.imgmsg_to_cv2(res_identification.originale, 'bgr8'))
             res_image_annotee.append(bridge.imgmsg_to_cv2(res_identification.annotee, 'bgr8'))
