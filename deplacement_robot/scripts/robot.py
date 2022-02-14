@@ -141,7 +141,7 @@ class Robot:
     # Fonction pour lancer la phase d identication
     def execute_identification(self, nom_plaque, diametres, send_result=True):
         if self.intrinsic is None or self.distorsion is None:
-            self.excute_initialisation()
+            self.execute_initialisation(send_result=False)
         if self.nom_plaque != nom_plaque or self.plaque_pos is None:
             self.execute_localisation(nom_plaque, send_result=False)
 
