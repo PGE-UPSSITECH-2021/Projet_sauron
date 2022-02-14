@@ -170,7 +170,8 @@ def run():
 			#loc_ok = ndt.dummy_location()
 			loc_ok = robot.execute_localisation(nom_plaque=get_plaqueName(ihm_msg), send_result=send_result)
 
-			robot.fin_prod()
+			if send_result:
+				robot.fin_prod()
 
 			# Return states
 			return loc_ok, id_ok, qual_ok
@@ -190,7 +191,8 @@ def run():
 			# Run id service and get id state
 			id_ok = robot.execute_identification(nom_plaque=get_plaqueName(ihm_msg), diametres=get_diametres(ihm_msg), send_result=send_result)
 
-			robot.fin_prod()
+			if send_result:
+				robot.fin_prod()
 
 			# Return states
 			return loc_ok, id_ok, qual_ok
