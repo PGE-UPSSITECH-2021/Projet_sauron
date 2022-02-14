@@ -18,6 +18,7 @@ class Robot:
         self.plaque_pos = None
         self.nom_plaque = None
         self.intrinsic = None
+        self.distorsion = None
         self.H = None
         self.image_global = None # TODO
         self.moveit_commander = moveit_commander.roscpp_initialize(sys.argv)
@@ -45,8 +46,8 @@ class Robot:
         self.aquitement = False
         rate = rospy.Rate(10)
         while not self.aquitement and not rospy.is_shutdown():
-			print("spam")
-			pub.publish(msg)
+            print("spam")
+            pub.publish(msg)
 
     # Fonction pour changer l etat de la production
     def set_robot_state(self, state):
@@ -65,20 +66,31 @@ class Robot:
         parcking_list = np.round(parcking_list, 3)
         curent_state = np.round(group.get_current_joint_values(), 3)
 
-	print(parcking_list)
-	print(curent_state)
-	print()
-
         if np.linalg.norm(np.array(parcking_list) - np.array(curent_state)) <= 0.2:
             self.set_robot_state("LIBRE INIT")
         else:
             self.set_robot_state("LIBRE NON INIT")
 
 
+    def excute_initialisation(self):
+        self.set_robot_state("INITIALISATION")
+
+        # Service pour deplacer le robot a sa position de parcking
+        move_parcking = rospy.ServiceProxy('move_robot_parcking', Robot_move_predef)
+
+        move_parcking()
+
+        rospack = rospkg.RosPack()
+        folder_path = rospack.get_path("deplacement_robot")
+        self.intrinsic = np.loadtxt(folder_path+"/saves/intrinsec")
+        self.distorsion = np.loadtxt(folder_path+"/saves/distorsion")
+
+        self.fin_prod()
+
 
     # Fonction pour lancer la phase de calibration
     def execute_calibration(self):
-        # TODO : self.intrinsic = run_calibration()
+        # TODO : self.intrinsic, self.distorsion = run_calibration()
 
         return True
 
@@ -99,7 +111,7 @@ class Robot:
                                     [0,0,1,0.005],
                                     [0,0,0,1]])
 
-	time.sleep(1)
+        time.sleep(1)
 
         if send_result:
             self.pub_result.publish(True)
@@ -109,11 +121,9 @@ class Robot:
 
     # Fonction pour lancer la phase d identication
     def execute_identification(self, nom_plaque, diametres, send_result=True):
-        if self.plaque_pos is None:
-            return False
-        '''if not self.param_int:
-            return False'''
-        if self.nom_plaque != nom_plaque:
+        if self.intrinsic is None or self.distorsion is None:
+            self.excute_initialisation()
+        if self.nom_plaque != nom_plaque or self.plaque_pos is None:
             self.execute_localisation(nom_plaque, send_result=False)
 
         msg,_ = run_identification(self.plaque_pos, nom_plaque, self.step_folder, diametres) #TODO get image global
@@ -126,9 +136,7 @@ class Robot:
 
     # Fonction pour lancer la phase de qualites
     def execute_qualite(self, nom_plaque, diametres):
-        if self.plaque_pos is None:
-            return False
-        if self.nom_plaque != nom_plaque:
+        if self.nom_plaque != nom_plaque or self.plaque_pos:
             self.execute_localisation(nom_plaque, send_result=False)
             self.execute_identification(nom_plaque, diametres, send_result=False)
         

@@ -30,6 +30,8 @@ def get_action(msg):
 			return 'S_QUAL'
 		if msg.action == 'Deplacer le robot':
 			return 'S_DEPL'
+		if msg.action == 'Initialiser':
+			return 'S_INIT'
 
 def get_plaqueName(msg):
 	return msg.plaque
@@ -57,6 +59,11 @@ PAUSE : pause process
 SHUTDOWN : stop node
 
 '''
+
+def run_initialisation():
+	robot.excute_initialisation()
+
+	return True
 
 def run():
 
@@ -133,6 +140,8 @@ def run():
 
 	rate = rospy.Rate(10)
 
+	calib_ok = self.run_initialisation()
+
 	while not rospy.is_shutdown():
 
 		command = None
@@ -144,10 +153,6 @@ def run():
 			# all_sys_ok = service_templace(dummy_check)
 			# all_sys_ok = dummy_check()
 			all_sys_ok = ndt.dummy_check()
-
-		# launch calibration
-		while not calib_ok:
-			calib_ok = ndt.dummy_calibration()
 
 		# Get message from ihm
 		command = get_action(ihm_msg)
@@ -216,6 +221,9 @@ def run():
 		if command is not None:
 			print(command)
 
+		if command == 'S_LOC':
+			loc_ok, id_ok, qual_ok = run_initialisation()
+		
 		# Location service
 		if command == 'S_LOC':
 			loc_ok, id_ok, qual_ok = run_location(loc_ok, id_ok, qual_ok)

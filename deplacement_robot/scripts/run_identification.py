@@ -76,7 +76,7 @@ def run_identification(plaque_pos, nom_plaque, step_folder, diametres, dist =  1
             p = Trou_identification()
             p.x = point.x
             p.y = point.y + i * decalage
-            p.diametre = point.type
+            p.diam = point.type
 
             trous.append((p.x,p.y))
             points_msg.append(p)

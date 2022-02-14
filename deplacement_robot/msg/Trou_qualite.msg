@@ -4,4 +4,4 @@ float32 z
 float32 diam
 bool conforme
 string raison
-sensor_msgs/Image CompressedImage
+sensor_msgs/CompressedImage image

@@ -66,7 +66,7 @@ def run_qualite(plaque_pos, nom_plaque, step_folder, dist =  0.18, diametres = [
         trou_qualite_msg.diam= p[1]
         trou_qualite_msg.conforme   = isdefective
         trou_qualite_msg.raison     = defect
-        #trou_qualite_msg.image      = image_ros_result
+        trou_qualite_msg.image      = image_ros_result
 
         trous.append(trou_qualite_msg)
 
