@@ -6,7 +6,7 @@ import moveit_commander
 from deplacement_robot.srv import Robot_move, Robot_move_predef, Speed_percentage, Robot_do_square, Robot_set_state, Get_fk, Move_predef
 import useful_robot
 import copy
-from std_msgs.msg import String
+from std_msgs.msg import String, Bool
 from geometry_msgs.msg import PoseStamped
 from sensor_msgs.msg import JointState
 from moveit_msgs.msg import Constraints, JointConstraint, PositionIKRequest
@@ -58,9 +58,9 @@ class Move_robot:
 
     def camera_state_listener(self, msg) :
         if msg.data :
-            self.camera_state = "MANU"
+            self.camera_state = "EN MARCHE"
         else :
-            self.camera_state = "ROUGE"
+            self.camera_state = "ETEINTE"
 
     def handler_robot_move(self, msg):
         pose_goal = msg.Pose
