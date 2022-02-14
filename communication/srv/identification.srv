@@ -1,3 +1,4 @@
+int32[] diams
 string plaque
 ---
 communication/Liste_points points

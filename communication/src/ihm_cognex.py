@@ -17,6 +17,7 @@ from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 from communication.srv import capture
 from communication.srv import identification, identificationResponse
+import numpy as np
 
 global variables
 variables = Variables()
@@ -60,10 +61,6 @@ def cognex_connect():
     variables.tn.write("SO1\r\n")
     rospy.loginfo("Com OK: "+str(variables.tn.expect(["0\r\n", "1\r\n"], timeout=3)[2]))
 
-    # Creation of the FTP connexion
-    variables.ftp = FTP(variables.ip)
-    variables.ftp.login(variables.user)
-
     # Update of default gain value
     variables.gain = int(float(read_cognex("GVG003")))
 
@@ -95,23 +92,28 @@ def write_cognex(case, val):
 # Get image from the camera
 @check_connexion
 def get_image():
-	# Send an acquisition event and wait for it
-	variables.tn.write("SW8\r\n")
+    if(variables.identification and not variables.opencv):
+        # Send an event for holes detection and wait for it
+        variables.tn.write("SW0\r\n")
+        # Log info to see what is happening
+        rospy.loginfo("Com : SW0 -- Com OK: "+str(variables.tn.expect(["0\r\n", "1\r\n"], timeout=6)[2]))
+    # Send an acquisition event and wait for it
+    variables.tn.write("SW8\r\n")
     # Log info to see what is happening
-	rospy.loginfo("Com : SW8 -- Com OK: "+str(variables.tn.expect(["0\r\n", "1\r\n"], timeout=6)[2]))
+    rospy.loginfo("Com : SW8 -- Com OK: "+str(variables.tn.expect(["0\r\n", "1\r\n"], timeout=6)[2]))
 
     # Creation of the FTP connexion
-    	variables.ftp = FTP(variables.ip)
-    	variables.ftp.login(variables.user)
+    variables.ftp = FTP(variables.ip)
+    variables.ftp.login(variables.user)
 
     # Download file from cognex
-	filename = 'image.bmp'
-	lf = open(filename, "wb")
-	variables.ftp.retrbinary("RETR " + filename, lf.write)
-	lf.close()
-	img = cv.imread(filename)
+    filename = 'image.bmp'
+    lf = open(filename, "wb")
+    variables.ftp.retrbinary("RETR " + filename, lf.write)
+    lf.close()
+    img = cv.imread(filename)
 
-	return img
+    return img
 
 
 
@@ -141,7 +143,7 @@ def identify(msg):
     try:
         bridge = CvBridge()
         if(msg.plaque == "Courbee"):
-	    img = img[:, (img.shape[1]/2) - 150:(img.shape[1]/2) + 150]
+            img = img[:, (img.shape[1]/2) - 150:(img.shape[1]/2) + 150]
             variables.originale = bridge.cv2_to_imgmsg(img, "bgr8")
         else:
             variables.originale = bridge.cv2_to_imgmsg(img, "bgr8")
@@ -163,11 +165,12 @@ def identify(msg):
         if(circles is not None):
             circles = np.uint16(np.around(circles))
             for i in circles[0,:]:
-                variables.points.append(Points())
-                variables.points[-1].x = i[0]
-                variables.points[-1].y = i[1]
-                variables.points[-1].type = variables.get_type(i[2])
-                printCircles(img, i[0], i[1], i[2])
+                if(variables.get_size(i[2]) in msg.diams):
+                    variables.points.append(Points())
+                    variables.points[-1].x = i[0]
+                    variables.points[-1].y = i[1]
+                    variables.points[-1].type = variables.get_size(i[2])
+                    printCircles(img, i[0], i[1], i[2])
 
     # If the selected method is In-Sight
     else:
@@ -187,11 +190,12 @@ def identify(msg):
                     ptx = int(float(read_cognex("GVB"+str(caseCognex))))
                     pty = int(float(read_cognex("GVC"+str(caseCognex))))
                     ptr = int(float(read_cognex("GVD"+str(caseCognex))))
-                variables.points.append(Points())
-                variables.points[-1].x = ptx
-                variables.points[-1].y = pty
-                variables.points[-1].type = variables.get_type(ptr)
-                printCircles(img,pty,ptx,ptr)
+                if(variables.get_size(ptr) in msg.diams):
+                    variables.points.append(Points())
+                    variables.points[-1].x = ptx
+                    variables.points[-1].y = pty
+                    variables.points[-1].type = variables.get_size(ptr)
+                    printCircles(img,pty,ptx,ptr)
 
             except (ValueError, TypeError):
                 rospy.loginfo("#ERR when reading points locations")
@@ -199,7 +203,7 @@ def identify(msg):
     # Try using the OpenCV bridge to convert image to the right format
     try:
         bridge = CvBridge()
-        if(variables.plaque == "Courbee"):
+        if(msg.plaque == "Courbee"):
             variables.annotee = bridge.cv2_to_imgmsg(img, "bgr8")
         else:
             variables.annotee = bridge.cv2_to_imgmsg(img, "bgr8")
@@ -215,6 +219,7 @@ def identify(msg):
     res.annotee = variables.annotee
 
     return res
+
 
 
 
@@ -283,6 +288,9 @@ def reloadImg(img, save=False):
     if(variables.identification):
         # If the selected method is OpenCV
         if(variables.opencv):
+            variables.tn.write("SW1\r\n")
+            # Log info to see what is happening
+            rospy.loginfo("Com : SW1 -- Com OK: "+str(variables.tn.expect(["0\r\n", "1\r\n"], timeout=6)[2]))
             # Change to grayscale
             imgGray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
             # Apply a median blur
