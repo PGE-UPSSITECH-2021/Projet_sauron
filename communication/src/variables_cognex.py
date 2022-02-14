@@ -26,7 +26,7 @@ class Variables:
 		# Process parameters
 		self.identification = True
 		self.opencv = True
-		self.render = True
+		self.render = False
 		self.plaque = "Plate" # Plate, Courbee, Lourde, False
 
 		# Circle identification parameters
@@ -43,6 +43,8 @@ class Variables:
 		self.types = [(9, 13), (14, 19), (25, 31), (40, 47)]
 		# Associated colors
 		self.colors = [(0,255,0), (255,0,0), (255,255,0), (255,0,255)]
+		# Associated sizes
+		self.sizes = [5, 7, 12, 18]
 
 		# Resize factor used to display the image in the window
 		self.scale_percent = 0.4
@@ -64,3 +66,12 @@ class Variables:
 			color = (0,0,255)
 
 		return color
+	
+	# Return type of the circle depending on the radius
+	def get_size(self, rayon):
+		i = 0
+		for dim in self.types:
+			if(rayon>=dim[0] and rayon<=dim[1]):
+				return self.sizes[i]
+			i += 1
+		return -1

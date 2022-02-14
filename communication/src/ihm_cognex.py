@@ -222,7 +222,11 @@ def identify(msg):
 
 
 
+def localisation(type, modele, photo, Mom, Moc, Mint, dist):
+    # Cintree
+    res = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
+    return res
 
 
 
