@@ -4,17 +4,22 @@ from communication.srv import capture
 from deplacement_robot.srv import Robot_move_predef
 from cv_bridge import CvBridge
 import cv2 as cv
-
+from calib_finale import calibration
 
 
 def run_calibration():
-    pass
+    save_images()
+    try:
+        matrix, distortion, r_vecs, t_vecs =calibration("../images_calib/")
+        return matrix, distortion, r_vecs, t_vecs
+    except TypeError:
+        print("CALIBRATION FAILED")
+    
 
 def move_to_point(p):
-    #TODO : prédef les points
     move_robot = rospy.ServiceProxy('calibration_'+str(p),Robot_move_predef)
     move_robot()
-    print("moving to point" + p)
+    print("moving to point"+str(p))
 
 def get_image():
     #capturer l'image
@@ -37,4 +42,4 @@ def save_images():
 
 if __name__ == "__main__":
     rospy.init_node('test_calibration', anonymous=True)
-    run_calibration()
+    matrix, distortion, r_vecs, t_vecs = run_calibration()
