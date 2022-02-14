@@ -1,4 +1,4 @@
-std_msgs/String plaque
+string plaque
 ---
 communication/Liste_points points
 sensor_msgs/Image originale

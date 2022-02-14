@@ -100,6 +100,10 @@ def get_image():
     # Log info to see what is happening
 	rospy.loginfo("Com : SW8 -- Com OK: "+str(variables.tn.expect(["0\r\n", "1\r\n"], timeout=6)[2]))
 
+    # Creation of the FTP connexion
+    	variables.ftp = FTP(variables.ip)
+    	variables.ftp.login(variables.user)
+
     # Download file from cognex
 	filename = 'image.bmp'
 	lf = open(filename, "wb")
@@ -137,7 +141,8 @@ def identify(msg):
     try:
         bridge = CvBridge()
         if(msg.plaque == "Courbee"):
-            variables.originale = bridge.cv2_to_imgmsg(img[:, (img.shape[1]/2) - 150:(img.shape[1]/2) + 150], "bgr8")
+	    img = img[:, (img.shape[1]/2) - 150:(img.shape[1]/2) + 150]
+            variables.originale = bridge.cv2_to_imgmsg(img, "bgr8")
         else:
             variables.originale = bridge.cv2_to_imgmsg(img, "bgr8")
     except CvBridgeError as e:
@@ -195,14 +200,17 @@ def identify(msg):
     try:
         bridge = CvBridge()
         if(variables.plaque == "Courbee"):
-            variables.annotee = bridge.cv2_to_imgmsg(img[:, (img.shape[1]/2) - 150:(img.shape[1]/2) + 150], "bgr8")
+            variables.annotee = bridge.cv2_to_imgmsg(img, "bgr8")
         else:
             variables.annotee = bridge.cv2_to_imgmsg(img, "bgr8")
     except CvBridgeError as e:
         print(e)
 
+    print(variables.annotee.height)
+    print(variables.annotee.width)
+
     res = identificationResponse()
-    res.point = variables.points
+    res.points.points = variables.points
     res.originale = variables.originale
     res.annotee = variables.annotee
 
