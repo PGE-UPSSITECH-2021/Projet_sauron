@@ -26,7 +26,7 @@ class Variables:
 		# Process parameters
 		self.identification = True
 		self.opencv = True
-		self.render = True
+		self.render = False
 		self.plaque = "Plate" # Plate, Courbee, Lourde, False
 
 		# Circle identification parameters
