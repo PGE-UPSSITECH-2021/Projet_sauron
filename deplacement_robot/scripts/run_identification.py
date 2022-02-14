@@ -14,8 +14,8 @@ from cv_bridge import CvBridge
 import matplotlib.pyplot as plt
 
 def run_identification(plaque_pos, nom_plaque, step_folder, diametres, dist =  1.03, seuil=100, pub = None):
-    pub_state(pub, "Debut identification.")
-    pub_state(pub, "Calcul de la trajectoire.")
+    pub_state(pub, "Debut identification")
+    pub_state(pub, "Calcul de la trajectoire")
 
     # Lecture du fichier step et recuperation des trous
     cylinders_dict = get_cylinders(step_folder + "/" + str(nom_plaque) + ".stp")
@@ -23,13 +23,13 @@ def run_identification(plaque_pos, nom_plaque, step_folder, diametres, dist =  1
     # Determination du chemin en fonction des trous
     poses = get_poses(cylinders_dict, plaque_pos, dist)
 
-    pub_state(pub, "Trajectoire trouve.")
+    pub_state(pub, "Trajectoire trouvee")
 
     ######## Deplacement du robot ########
     # Service pour deplacer le robot a un point donne
     move_robot = rospy.ServiceProxy('move_robot', Robot_move)
-    # Service pour deplacer le robot a sa position de parcking
-    move_parcking = rospy.ServiceProxy('move_robot_parcking', Robot_move_predef)
+    # Service pour deplacer le robot a sa position de parking
+    move_parking = rospy.ServiceProxy('move_robot_parcking', Robot_move_predef)
     # Service pour effectuer l identification
     identification_srv = rospy.ServiceProxy("camera/identification", identification)
 
@@ -54,26 +54,26 @@ def run_identification(plaque_pos, nom_plaque, step_folder, diametres, dist =  1
     for i,pose in enumerate(poses):
         if rospy.is_shutdown():
             exit()
-        pub_state(pub, "Deplacement a la position " + str(i+1) + "/" + str(nbPose) + ".")
-        move_parcking()
+        pub_state(pub, "Deplacement a la position " + str(i+1) + "/" + str(nbPose))
+        move_parking()
         res_move = move_robot(pose)
 
         if not res_move.res :
-            pub_state(pub, "Position inategnable. Passage au position suivante.")
-            rospy.logwarn("Point inategnable. Passage au point suivant.")
+            pub_state(pub, "Position inatteignable. Passage au position suivante")
+            rospy.logwarn("Point inatteignable. Passage au point suivant.")
             res_points.append([])
             res_image_originale.append(np.zeros((1944,decalage,3), dtype=np.uint8))
             res_image_annotee.append(np.zeros((1944,decalage,3), dtype=np.uint8))
         else:
-            pub_state(pub, "Identification des trous.")
+            pub_state(pub, "Identification des trous")
             res_identification = identification_srv(diametres, str(type_plaque))
             res_points.append(res_identification.points.points)
             res_image_originale.append(bridge.imgmsg_to_cv2(res_identification.originale, 'bgr8'))
             res_image_annotee.append(bridge.imgmsg_to_cv2(res_identification.annotee, 'bgr8'))
     
-    pub_state(pub, "Identification fini retour au parcking.")
+    pub_state(pub, "Identification finie, retour position parking")
 
-    move_parcking()
+    move_parking()
 
     image_annotee = np.concatenate(res_image_annotee,axis=1)
     image_originale = np.concatenate(res_image_originale,axis=1)
@@ -81,7 +81,7 @@ def run_identification(plaque_pos, nom_plaque, step_folder, diametres, dist =  1
     points_msg = []
     trous = []
 
-    pub_state(pub, "Traitement des donees.")
+    pub_state(pub, "Traitement des donnees")
 
     for i,points in enumerate(res_points):
         for point in points:
@@ -108,7 +108,7 @@ def run_identification(plaque_pos, nom_plaque, step_folder, diametres, dist =  1
     plt.pause(0.001)
     '''print("press enter")
     raw_input()'''
-    pub_state(pub, "Identification termine.")
+    pub_state(pub, "Identification terminee.")
 
     return msg, (image_originale, trous)
 

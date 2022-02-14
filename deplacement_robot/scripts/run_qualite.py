@@ -33,9 +33,9 @@ def run_qualite(plaque_pos, nom_plaque, step_folder, dist =  0.18, diametres = [
     # Service pour prendre une image
     capture_image = rospy.ServiceProxy("camera/capture", capture)
 
-    pub_state(pub, "Deplacement a la position de packing.")
+    pub_state(pub, "Deplacement a la position de parking")
     move_parcking()
-    pub_state(pub, "Deplacement termine.")
+    pub_state(pub, "Deplacement termine")
 
     bridge = CvBridge()
     returned_msg = Qualite()
@@ -49,19 +49,19 @@ def run_qualite(plaque_pos, nom_plaque, step_folder, dist =  0.18, diametres = [
         if rospy.is_shutdown():
             exit()
         
-        pub_state(pub, "Deplacement a la position " + str(i+1) + "/" + str(nbPose) + ".")
+        pub_state(pub, "Deplacement a la position " + str(i+1) + "/" + str(nbPose))
         # Le robot se deplace au point p
         resp1 = move_robot(p[0])
 
-        pub_state(pub, "Deplacement termine.")
+        pub_state(pub, "Deplacement termine")
 
         trou_qualite_msg = Trou_qualite()
 
-        pub_state(pub, "Prise d'image.")
+        pub_state(pub, "Prise d'image")
 
         res = capture_image()
 
-        pub_state(pub, "Verification de la conformite.")
+        pub_state(pub, "Verification de la conformite")
 
         rosimage = res.image
         cv_image = bridge.imgmsg_to_cv2(rosimage, 'bgr8')
@@ -95,12 +95,12 @@ def run_qualite(plaque_pos, nom_plaque, step_folder, dist =  0.18, diametres = [
     if rospy.is_shutdown():
         exit()
 
-    pub_state(pub, "Conformite fini retour au parcking.")
+    pub_state(pub, "Conformite finie, retour au parking")
 
     # Retour a la position de parcking
     move_parcking()
 
-    pub_state(pub, "Conformite termine.")
+    pub_state(pub, "Conformite terminee.")
 
     return returned_msg
 
