@@ -6,7 +6,7 @@ from run_qualite import run_qualite
 from run_identification import run_identification
 from deplacement_robot.msg import Identification, Qualite, Localisation
 from std_msgs.msg import Bool, String
-from deplacement_robot.srv import Robot_set_state
+from deplacement_robot.srv import Robot_set_state, Robot_move_predef
 import moveit_commander
 import sys
 import time
@@ -31,7 +31,7 @@ class Robot:
         self.pub_qualite = rospy.Publisher("result/qualite", Qualite, queue_size=10)
         self.pub_localisation = rospy.Publisher("result/localisation", Localisation, queue_size=10)
         
-        self.pub_prod_state = rospy.Publisher("production_state", String)
+        self.pub_prod_state = rospy.Publisher("production_state", String,  queue_size=10)
 
         self.srv_set_robot_state = rospy.ServiceProxy("set_robot_state", Robot_set_state)
 
@@ -74,7 +74,7 @@ class Robot:
             self.set_robot_state("LIBRE NON INIT")
 
 
-    def excute_initialisation(self, send_result=True):
+    def execute_initialisation(self, send_result=True):
         self.set_robot_state("INITIALISATION")
 
         # Service pour deplacer le robot a sa position de parcking
