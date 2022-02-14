@@ -74,7 +74,7 @@ class Robot:
             self.set_robot_state("LIBRE NON INIT")
 
 
-    def excute_initialisation(self):
+    def excute_initialisation(self, send_result=True):
         self.set_robot_state("INITIALISATION")
 
         # Service pour deplacer le robot a sa position de parcking
@@ -87,10 +87,12 @@ class Robot:
         try :
             self.intrinsic = np.loadtxt(folder_path+"/saves/intrinsec")
             self.distorsion = np.loadtxt(folder_path+"/saves/distorsion")
-            self.fin_prod()
+            if send_result:
+                self.fin_prod()
             return True
         except:
-            self.fin_prod()
+            if send_result:
+                self.fin_prod()
             return False
 
     def excute_qualibration(self):
@@ -158,7 +160,7 @@ class Robot:
 
     # Fonction pour lancer la phase de qualites
     def execute_qualite(self, nom_plaque, diametres):
-        if self.nom_plaque != nom_plaque or self.plaque_pos:
+        if self.nom_plaque != nom_plaque or self.plaque_pos is None:
             self.execute_localisation(nom_plaque, send_result=False)
             self.execute_identification(nom_plaque, diametres, send_result=False)
         

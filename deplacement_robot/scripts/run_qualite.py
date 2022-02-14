@@ -41,7 +41,7 @@ def run_qualite(plaque_pos, nom_plaque, step_folder, dist =  0.18, diametres = [
     returned_msg = Qualite()
     trous=[]
 
-    nbPos = len(points)
+    nbPose = len(points)
 
     # Effectuer la trajectoire
     for i,p in enumerate(points):

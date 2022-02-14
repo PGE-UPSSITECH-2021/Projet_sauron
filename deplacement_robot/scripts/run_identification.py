@@ -50,7 +50,7 @@ def run_identification(plaque_pos, nom_plaque, step_folder, diametres, dist =  1
         type_plaque = "Courbee"
 
     # Deroulement de la trajectoire et de l'identification
-    npPose = len(pose)
+    nbPose = len(poses)
     for i,pose in enumerate(poses):
         if rospy.is_shutdown():
             exit()

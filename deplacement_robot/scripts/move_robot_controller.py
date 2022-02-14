@@ -141,7 +141,7 @@ def run():
 
 	rate = rospy.Rate(10)
 
-	calib_ok = self.run_initialisation()
+	calib_ok = run_initialisation()
 
 	while not rospy.is_shutdown():
 
@@ -224,8 +224,8 @@ def run():
 		if command is not None:
 			print(command)
 
-		if command == 'S_LOC':
-			loc_ok, id_ok, qual_ok = run_initialisation()
+		if command == 'S_INIT':
+			calib_ok = run_initialisation()
 		
 		# Location service
 		if command == 'S_LOC':
