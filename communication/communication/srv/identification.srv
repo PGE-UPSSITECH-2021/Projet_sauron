@@ -1,5 +1,0 @@
-string plaque
----
-communication/Liste_points points
-sensor_msgs/Image originale
-sensor_msgs/Image annotee
