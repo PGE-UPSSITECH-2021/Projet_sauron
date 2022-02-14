@@ -82,11 +82,31 @@ class Robot:
 
         rospack = rospkg.RosPack()
         folder_path = rospack.get_path("deplacement_robot")
-        self.intrinsic = np.loadtxt(folder_path+"/saves/intrinsec")
-        self.distorsion = np.loadtxt(folder_path+"/saves/distorsion")
+        try :
+            self.intrinsic = np.loadtxt(folder_path+"/saves/intrinsec")
+            self.distorsion = np.loadtxt(folder_path+"/saves/distorsion")
+            self.fin_prod()
+            return True
+        except:
+            self.fin_prod()
+            return False
+
+    def excute_qualibration(self):
+        self.set_robot_state("CALIBRATION")
+
+        #TODO self.intrinsic, self.distorsion = run_calibration()
+        # Only test
+        self.intrinsic = np.array([ [4.78103205e+03, 0.00000000e+00, 1.20113948e+03],
+                                    [0.00000000e+00, 4.77222528e+03, 1.14533714e+03],
+                                    [0.00000000e+00, 0.00000000e+00, 1.00000000e+00]])
+        self.distorsion = np.array([[ 1.55284357e-01, -3.07067931e+00,  5.16274059e-03, -4.78075223e-03, 1.80663250e+01]])
+
+        rospack = rospkg.RosPack()
+        folder_path = rospack.get_path("deplacement_robot")
+        np.savetxt(folder_path+"/saves/intrinsec", self.intrinsic)
+        np.savetxt(folder_path+"/saves/distorsion", self.distorsion)
 
         self.fin_prod()
-
 
     # Fonction pour lancer la phase de calibration
     def execute_calibration(self):

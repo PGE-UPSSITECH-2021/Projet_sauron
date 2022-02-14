@@ -46,6 +46,12 @@ def get_diametres(msg):
 		diametres.append(float(d))
 	return diametres
 
+def run_initialisation():
+	return robot.excute_initialisation()
+
+def run_calibration() :
+	pass
+
 # To write into a config file, loaded via json.load()
 TOPICS = {'IHM': {'name': 'message_ihm_run', 'datatype': IHM_msg, 'callback': callback_ihm}}
 
@@ -59,11 +65,6 @@ PAUSE : pause process
 SHUTDOWN : stop node
 
 '''
-
-def run_initialisation():
-	robot.excute_initialisation()
-
-	return True
 
 def run():
 
