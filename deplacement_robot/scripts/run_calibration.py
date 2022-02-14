@@ -8,6 +8,7 @@ from calib_finale import calibration
 
 
 def run_calibration():
+    save_images()
     try:
         matrix, distortion, r_vecs, t_vecs =calibration("../images_calib/")
         return matrix, distortion, r_vecs, t_vecs
