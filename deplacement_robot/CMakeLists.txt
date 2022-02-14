@@ -16,6 +16,7 @@ add_service_files(
   Robot_do_square.srv
   Robot_set_state.srv
   Get_fk.srv
+  Move_predef.srv
 )
 
 add_message_files(
@@ -44,6 +45,8 @@ catkin_install_python(PROGRAMS
   scripts/run_qualite.py
   scripts/move_robot_server_demo_release4.py
   scripts/move_robot_controller.py
+  scripts/run_calibration.py
+  scripts/run_localisation.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
