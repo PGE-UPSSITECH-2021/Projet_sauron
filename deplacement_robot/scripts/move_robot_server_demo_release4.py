@@ -27,6 +27,10 @@ class Move_robot:
         self.group.set_planner_id("TRRT")
         self.group.set_planning_time(10)
 
+        rospy.Subscriber("camera/ok", Bool, self.camera_state_listener)
+
+        self.camera_state = "ETEINTE" # ETEINTE ou EN MARCHE
+
         #Limitation de la vitesse    
         args = sys.argv[1:]
         if len(args) >= 1:
@@ -48,9 +52,15 @@ class Move_robot:
         pub_secu = rospy.Publisher("securite_state", String, queue_size=10)
         while not rospy.is_shutdown():
             publisher.publish(self.state)
-            pub_cam.publish("EN MARCHE")
+            pub_cam.publish(self.camera_state)
             pub_secu.publish("OK")
             rate.sleep()
+
+    def camera_state_listener(self, msg) :
+        if msg.data :
+            self.camera_state = "MANU"
+        else :
+            self.camera_state = "ROUGE"
 
     def handler_robot_move(self, msg):
         pose_goal = msg.Pose
