@@ -30,6 +30,8 @@ class Robot:
         self.pub_identification = rospy.Publisher("result/identification", Identification, queue_size=10)
         self.pub_qualite = rospy.Publisher("result/qualite", Qualite, queue_size=10)
         self.pub_localisation = rospy.Publisher("result/localisation", Localisation, queue_size=10)
+        
+        self.pub_prod_state = rospy.Publisher("production_state", String)
 
         self.srv_set_robot_state = rospy.ServiceProxy("set_robot_state", Robot_set_state)
 
@@ -146,7 +148,7 @@ class Robot:
         if self.nom_plaque != nom_plaque or self.plaque_pos is None:
             self.execute_localisation(nom_plaque, send_result=False)
 
-        msg,_ = run_identification(self.plaque_pos, nom_plaque, self.step_folder, diametres) #TODO get image global
+        msg,_ = run_identification(self.plaque_pos, nom_plaque, self.step_folder, diametres, pub=self.pub_prod_state) #TODO get image global
 
         if send_result:
             self.pub_result.publish(True)
@@ -160,7 +162,7 @@ class Robot:
             self.execute_localisation(nom_plaque, send_result=False)
             self.execute_identification(nom_plaque, diametres, send_result=False)
         
-        msg = run_qualite(self.plaque_pos, nom_plaque, self.step_folder, diametres=diametres)
+        msg = run_qualite(self.plaque_pos, nom_plaque, self.step_folder, diametres=diametres, pub=self.pub_prod_state)
 
         self.pub_result.publish(True)
         self.spam_result(self.pub_qualite, msg)

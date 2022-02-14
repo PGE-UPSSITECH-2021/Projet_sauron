@@ -13,12 +13,16 @@ from  geometry_msgs.msg import Pose
 from deplacement_robot.msg import Qualite, Trou_qualite
 from cv_bridge import CvBridge
 
-def run_qualite(plaque_pos, nom_plaque, step_folder, dist =  0.18, diametres = [5,7,12,18]):
+def run_qualite(plaque_pos, nom_plaque, step_folder, dist =  0.18, diametres = [5,7,12,18], pub=None):
+    pub_state(pub, "Debut conformite.")
+    pub_state(pub, "Calcul de la trajectoire.")
     # Lecture du fichier step et recuperation de tous les trous
     d = get_holes(step_folder + "/" + str(nom_plaque) + ".stp", diametres)
 
     # Determination du chemin en fonction des trous
     points = get_path(plaque_pos, dist, d)
+
+    pub_state(pub, "Trajectoire trouve.")
 
     ######## Deplacement du robot ########
 
@@ -29,26 +33,35 @@ def run_qualite(plaque_pos, nom_plaque, step_folder, dist =  0.18, diametres = [
     # Service pour prendre une image
     capture_image = rospy.ServiceProxy("camera/capture", capture)
 
-    #move_parcking()
-
+    pub_state(pub, "Deplacement a la position de packing.")
+    move_parcking()
+    pub_state(pub, "Deplacement termine.")
 
     bridge = CvBridge()
     returned_msg = Qualite()
     trous=[]
 
+    nbPos = len(points)
+
     # Effectuer la trajectoire
-    for p in points:
+    for i,p in enumerate(points):
         # On arrete si le node est kill
         if rospy.is_shutdown():
             exit()
         
+        pub_state(pub, "Deplacement a la position " + str(i+1) + "/" + str(nbPose) + ".")
         # Le robot se deplace au point p
         resp1 = move_robot(p[0])
-        #time.sleep(2)
+
+        pub_state(pub, "Deplacement termine.")
 
         trou_qualite_msg = Trou_qualite()
 
+        pub_state(pub, "Prise d'image.")
+
         res = capture_image()
+
+        pub_state(pub, "Verification de la conformite.")
 
         rosimage = res.image
         cv_image = bridge.imgmsg_to_cv2(rosimage, 'bgr8')
@@ -71,24 +84,30 @@ def run_qualite(plaque_pos, nom_plaque, step_folder, dist =  0.18, diametres = [
         trous.append(trou_qualite_msg)
 
         # Pour les tests
-        print(trou_qualite_msg)
+        #print(trou_qualite_msg)
         #print("press enter")
         #raw_input()
 
     #returned_msg.image=None #TODO
     returned_msg.trous = trous
     returned_msg.nbTrous = len(trous)
-    return returned_msg
-
-
 
     if rospy.is_shutdown():
         exit()
 
+    pub_state(pub, "Conformite fini retour au parcking.")
+
     # Retour a la position de parcking
     move_parcking()
 
+    pub_state(pub, "Conformite termine.")
 
+    return returned_msg
+
+
+def pub_state(pub, msg):
+    if not pub is None:
+        pub.publish(msg)
 
 def get_holes(file_path, diametres):
     step = StepReader(file_path)

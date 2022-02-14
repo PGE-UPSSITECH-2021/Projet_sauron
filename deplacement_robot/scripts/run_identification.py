@@ -13,12 +13,17 @@ from cv_bridge import CvBridge
 
 import matplotlib.pyplot as plt
 
-def run_identification(plaque_pos, nom_plaque, step_folder, diametres, dist =  1.03, seuil=100):
+def run_identification(plaque_pos, nom_plaque, step_folder, diametres, dist =  1.03, seuil=100, pub = None):
+    pub_state(pub, "Debut identification.")
+    pub_state(pub, "Calcul de la trajectoire.")
+
     # Lecture du fichier step et recuperation des trous
     cylinders_dict = get_cylinders(step_folder + "/" + str(nom_plaque) + ".stp")
 
     # Determination du chemin en fonction des trous
     poses = get_poses(cylinders_dict, plaque_pos, dist)
+
+    pub_state(pub, "Trajectoire trouve.")
 
     ######## Deplacement du robot ########
     # Service pour deplacer le robot a un point donne
@@ -38,28 +43,36 @@ def run_identification(plaque_pos, nom_plaque, step_folder, diametres, dist =  1
     
     bridge = CvBridge()
 
+    # Determination du type de plaque pour savoir si on doit faire des bande en image
     type_plaque = "Plate"
 
     if len(poses) > 1:
         type_plaque = "Courbee"
 
-    for pose in poses:
+    # Deroulement de la trajectoire et de l'identification
+    npPose = len(pose)
+    for i,pose in enumerate(poses):
         if rospy.is_shutdown():
             exit()
+        pub_state(pub, "Deplacement a la position " + str(i+1) + "/" + str(nbPose) + ".")
         move_parcking()
         res_move = move_robot(pose)
 
         if not res_move.res :
+            pub_state(pub, "Position inategnable. Passage au position suivante.")
             rospy.logwarn("Point inategnable. Passage au point suivant.")
             res_points.append([])
             res_image_originale.append(np.zeros((1944,decalage,3), dtype=np.uint8))
             res_image_annotee.append(np.zeros((1944,decalage,3), dtype=np.uint8))
         else:
+            pub_state(pub, "Identification des trous.")
             res_identification = identification_srv(diametres, str(type_plaque))
             res_points.append(res_identification.points.points)
             res_image_originale.append(bridge.imgmsg_to_cv2(res_identification.originale, 'bgr8'))
             res_image_annotee.append(bridge.imgmsg_to_cv2(res_identification.annotee, 'bgr8'))
     
+    pub_state(pub, "Identification fini retour au parcking.")
+
     move_parcking()
 
     image_annotee = np.concatenate(res_image_annotee,axis=1)
@@ -67,6 +80,8 @@ def run_identification(plaque_pos, nom_plaque, step_folder, diametres, dist =  1
 
     points_msg = []
     trous = []
+
+    pub_state(pub, "Traitement des donees.")
 
     for i,points in enumerate(res_points):
         for point in points:
@@ -91,10 +106,15 @@ def run_identification(plaque_pos, nom_plaque, step_folder, diametres, dist =  1
     plt.imshow(image_annotee)
     plt.draw()
     plt.pause(0.001)
-    print("press enter")
-    raw_input()
+    '''print("press enter")
+    raw_input()'''
+    pub_state(pub, "Identification termine.")
 
     return msg, (image_originale, trous)
+
+def pub_state(pub, msg):
+    if not pub is None:
+        pub.publish(msg)
 
 def get_points_projection(intrinsic, extrinsic, P0):
     # [xi,yi,1] = 1/z*[intrinseque].[extrinseque].[point]
