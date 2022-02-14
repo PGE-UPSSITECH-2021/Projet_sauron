@@ -124,7 +124,7 @@ class Move_robot:
         return []
 
     def handler_move_predef(self, msg):
-        return move_predef(msg.pos)
+        return self.move_predef(msg.pos)
 
     def move_robot_server(self):
         s = rospy.Service('move_robot', Robot_move, self.handler_robot_move)
