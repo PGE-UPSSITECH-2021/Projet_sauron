@@ -1,3 +1,4 @@
+#!/Documents/this_semester/pge/venv/bin/env python2.7
 from typing import Type
 import numpy as np
 import rospy
@@ -7,28 +8,13 @@ from communication.srv import capture
 from cv_bridge import CvBridge
 from useful_robot import pose_msg_to_homogeneous_matrix,get_fk
 from pyquaternion import Quaternion
-
-class UntrustworthyLocalisationError(Exception):
-    def __init__(self,message):
-        self.message = message
-        super(UntrustworthyLocalisationError, self).__init__(message)
-
-class MatchingError(Exception):
-    def __init__(self,message):
-        self.message = message
-        super(MatchingError, self).__init__(message)
+from localisation import main as main_loc
 
 
-def localiser(type_plaque,model_path,image,M_hom_3D,M_pass_oc,M_intr,coeff_distr):
-    try:
-        pts,matrice_extr = main_loc()
-    except(UntrustworthyLocalisationError,MatchingError), e:
-        return str(e)
-    return pts,matrice_extr
+def l():
+    print("localisation done")
 
-def main_loc():
-    #insert fonction de localisation
-    pass
+
 
 def move_to_point(p):
     move_robot = rospy.ServiceProxy('localisation_'+str(p), Robot_move_predef)
@@ -59,16 +45,19 @@ def get_image():
 
 
 def run_localisation():
-    #bouger au points prédéfinits
     for i in range(4):
         move_to_point(i+1)
     #capturer l'image
-        img = get_image()
+        #img = get_image()
     #catch les exceptions (retour de mauvais type de donnée)
         pose_get_fk = get_fk()
         Mtrix_hom_3D = pose_msg_to_homogeneous_matrix(pose_get_fk)
         try:
-            pts,matrice_extr = localiser(type_plaque=,model_path=,image=img,M_hom_3D=Mtrix_hom_3D,M_pass_oc=,M_intr=,coeff_distr=)
+            #trans,rot,matrice_extr = localiser(type_plaque=,model_path=,image=img,M_hom_3D=Mtrix_hom_3D,M_pass_oc=,M_intr=,coeff_distr=)
+            #send_results([trans,rot])
+            l()
+            send_results[1,2,3,4,5,6]
+            break
         except TypeError:
             print("plaque non trouvée")
 

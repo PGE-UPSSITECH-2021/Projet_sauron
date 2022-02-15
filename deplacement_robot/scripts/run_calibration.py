@@ -10,8 +10,8 @@ from calib_finale import calibration
 def run_calibration():
     save_images()
     try:
-        matrix, distortion, r_vecs, t_vecs =calibration("../images_calib/")
-        return matrix, distortion, r_vecs, t_vecs
+        matrix_intr, distortion, r_vecs, t_vecs=calibration("../images_calib/")
+        return matrix_intr, distortion, r_vecs, t_vecs
     except TypeError:
         print("CALIBRATION FAILED")
     
@@ -42,4 +42,4 @@ def save_images():
 
 if __name__ == "__main__":
     rospy.init_node('test_calibration', anonymous=True)
-    matrix, distortion, r_vecs, t_vecs = run_calibration()
+    matrix_intr, distortion, r_vecs, t_vecs = run_calibration()
