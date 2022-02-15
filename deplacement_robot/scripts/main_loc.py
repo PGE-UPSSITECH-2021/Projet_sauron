@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-from FinalCode.matUtils import R_to_bryant, bryant_to_R
+from matUtils import R_to_bryant, bryant_to_R
 from localisation_exception import UntrustworthyLocalisationError, MatchingError
 from hole_detection import hough
 from pnp_solving import process_pnp, calcule_erreur
@@ -39,7 +39,6 @@ def main_localisation(  type_plaque,
             file = f.readlines()
         object_points = getAllCircles(file)
         object_points = np.delete(object_points, 3, axis=1)
-        
     except Exception as e:
         print(e)
     
@@ -90,20 +89,31 @@ def main_localisation(  type_plaque,
     elif erreur > 3:
         raise UntrustworthyLocalisationError(erreur)
     
-    try : 
-        bryant = R_to_bryant(matrice_extrinseque[:3, :3])
-    except Exception as e:
-        print(e)
+    
     
 
     # ================================ Transformation dans le repere monde ================================
-
-
-    # A FAIRE
-
-    return translation_vector, rotation_vector, matrice_extrinseque, bryant
+	
+    
+    # Rc * Mco --> Ro * Mom --> Rm 
+    matrice_extrinseque[:3, 3] = matrice_extrinseque[:3, 3]/1000.
+    print(matrice_extrinseque)
+    extrinseque_outils = np.dot(matrice_extrinseque , np.linalg.inv(matrice_passage_outils_cam))
+    extrinseque_monde = np.dot(extrinseque_outils, np.linalg.inv(matrice_homogene_3D_outils))
     
 
+    # Calcul des angles de Brillant    
+
+    try : 
+        bryant = R_to_bryant(extrinseque_monde[:3, :3])
+    except Exception as e:
+        print(e)
+
+    # A FAIRE
+    print(erreur)
+    return translation_vector, rotation_vector, extrinseque_monde, bryant
+    
+	
 
 
 if __name__ == "__main__":

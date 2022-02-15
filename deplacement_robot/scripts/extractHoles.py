@@ -44,6 +44,7 @@ def getAllCircles(file, getBothFaces=False):
     Circles = extractCircles(file)
     results = np.zeros([len(Circles),4])
 
+
     for i in range(len(Circles)):
         [currentPos, currentD] = parseCircle(Circles[i],file)    
         if currentD < 50:
