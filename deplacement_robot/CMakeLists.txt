@@ -43,7 +43,6 @@ catkin_install_python(PROGRAMS
   scripts/move_robot_server.py
   scripts/run_identification.py
   scripts/run_qualite.py
-  scripts/move_robot_server_demo_release4.py
   scripts/move_robot_controller.py
   scripts/run_calibration.py
   scripts/run_localisation.py
