@@ -83,8 +83,8 @@ class Move_robot:
             self.group.clear_pose_targets()
             return True
 
-    def handler_robot_move_parcking(self, a):
-        return self.move_predef("parcking")
+    def handler_robot_move_parking(self, a):
+        return self.move_predef("parking")
 
     def handler_get_fk(self, a):
         pose = useful_robot.get_fk()
@@ -140,8 +140,8 @@ class Move_robot:
         s = rospy.Service('move_robot', Robot_move, self.handler_robot_move)
         rospy.loginfo("Server move robot ready !")
 
-        s4 = rospy.Service('move_robot_parcking', Robot_move_predef, self.handler_robot_move_parcking)
-        rospy.loginfo("Server move robot to parcking ready !")
+        s4 = rospy.Service('move_robot_parking', Robot_move_predef, self.handler_robot_move_parking)
+        rospy.loginfo("Server move robot to parking ready !")
 
         s6 = rospy.Service('move_camera', Robot_move_predef, self.move_camera)
         rospy.loginfo("Server move robot to camera ready !")

@@ -134,7 +134,7 @@
         <joint name="joint_5_b" value="-2.0615782737731934" />
         <joint name="joint_6_t" value="-0.793272078037262" />
     </group_state>
-    <group_state name="parcking" group="manipulator">
+    <group_state name="parking" group="manipulator">
         <joint name="joint_1_s" value="0.18" />
         <joint name="joint_2_l" value="0.0886" />
         <joint name="joint_3_u" value="1.2445" />

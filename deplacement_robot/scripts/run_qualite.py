@@ -28,13 +28,13 @@ def run_qualite(plaque_pos, nom_plaque, step_folder, dist =  0.18, diametres = [
 
     # Service pour deplacer le robot a un point donne
     move_robot = rospy.ServiceProxy('move_robot', Robot_move)
-    # Service pour deplacer le robot a sa position de parcking
-    move_parcking = rospy.ServiceProxy('move_robot_parcking', Robot_move_predef)
+    # Service pour deplacer le robot a sa position de parking
+    move_parking = rospy.ServiceProxy('move_robot_parking', Robot_move_predef)
     # Service pour prendre une image
     capture_image = rospy.ServiceProxy("camera/capture", capture)
 
     pub_state(pub, "Deplacement a la position de parking")
-    move_parcking()
+    move_parking()
     pub_state(pub, "Deplacement termine")
 
     bridge = CvBridge()
@@ -97,8 +97,8 @@ def run_qualite(plaque_pos, nom_plaque, step_folder, dist =  0.18, diametres = [
 
     pub_state(pub, "Conformite finie, retour au parking")
 
-    # Retour a la position de parcking
-    move_parcking()
+    # Retour a la position de parking
+    move_parking()
 
     pub_state(pub, "Conformite terminee.")
 

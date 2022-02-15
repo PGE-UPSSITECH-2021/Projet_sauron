@@ -29,7 +29,7 @@ def run_identification(plaque_pos, nom_plaque, step_folder, diametres, dist =  1
     # Service pour deplacer le robot a un point donne
     move_robot = rospy.ServiceProxy('move_robot', Robot_move)
     # Service pour deplacer le robot a sa position de parking
-    move_parking = rospy.ServiceProxy('move_robot_parcking', Robot_move_predef)
+    move_parking = rospy.ServiceProxy('move_robot_parking', Robot_move_predef)
     # Service pour effectuer l identification
     identification_srv = rospy.ServiceProxy("camera/identification", identification)
 
