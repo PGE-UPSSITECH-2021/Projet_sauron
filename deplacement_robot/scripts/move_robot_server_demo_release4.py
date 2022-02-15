@@ -27,7 +27,7 @@ class Move_robot:
         self.group.set_planner_id("TRRT")
         self.group.set_planning_time(10)
 
-        rospy.Subscriber("camera/ok", Bool, self.camera_state_listener)
+        rospy.Subscriber("camera/camera_ok", Bool, self.camera_state_listener)
 
         self.camera_state = "ETEINTE" # ETEINTE ou EN MARCHE
 
