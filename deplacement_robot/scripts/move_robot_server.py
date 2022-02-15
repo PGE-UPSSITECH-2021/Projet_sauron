@@ -3,11 +3,16 @@
 import sys
 import rospy
 import moveit_commander
-from deplacement_robot.srv import Robot_move, Robot_move_predef, Speed_percentage, Robot_do_square
+from deplacement_robot.srv import Robot_move, Robot_move_predef, Speed_percentage, Robot_do_square, Robot_set_state, Get_fk, Move_predef
 import useful_robot
 import copy
+from std_msgs.msg import String, Bool
+from geometry_msgs.msg import PoseStamped
+from sensor_msgs.msg import JointState
+from moveit_msgs.msg import Constraints, JointConstraint, PositionIKRequest
+from moveit_msgs.srv import GetPositionIK
 
-
+#Fichier pour la demo de la release 4
 
 class Move_robot:
     def __init__(self):
@@ -17,14 +22,21 @@ class Move_robot:
         self.group = moveit_commander.MoveGroupCommander("manipulator")
         self.used = False #TODO
         self.speed = 1
+        self.state = "LIBRE NON INIT"
+
+        self.group.set_planner_id("TRRT")
+        self.group.set_planning_time(10)
+
+        rospy.Subscriber("camera/camera_ok", Bool, self.camera_state_listener)
+
+        self.camera_state = "ETEINTE" # ETEINTE ou EN MARCHE
 
         #Limitation de la vitesse    
         args = sys.argv[1:]
         if len(args) >= 1:
             try:
                 speed = float(args[0])
-                self.group.set_max_velocity_scaling_factor(speed/100)
-                rospy.loginfo("Speed limited to " + str(speed) + "%.")
+                self.set_speed(speed)
             except ValueError:
                 rospy.logerr('Error the speed percentage must be float ! No : "' + args[0] + '"')
                 rospy.signal_shutdown("Error speed percentage value.")
@@ -33,46 +45,61 @@ class Move_robot:
         if not rospy.is_shutdown():
             self.move_robot_server()
 
+        # Publication de l etat a 10 Hz
+        rate = rospy.Rate(10)
+        publisher = rospy.Publisher("robot_state", String, queue_size=10)
+        pub_cam = rospy.Publisher("cam_state", String, queue_size=10)
+        pub_secu = rospy.Publisher("securite_state", String, queue_size=10)
+        while not rospy.is_shutdown():
+            publisher.publish(self.state)
+            pub_cam.publish(self.camera_state)
+            pub_secu.publish("OK")
+            rate.sleep()
+
+    def camera_state_listener(self, msg) :
+        if msg.data :
+            self.camera_state = "EN MARCHE"
+        else :
+            self.camera_state = "ETEINTE"
+
     def handler_robot_move(self, msg):
         pose_goal = msg.Pose
         print("Move robot to : " + str(pose_goal))
 
-        self.group.set_pose_target(pose_goal)
+        for i in range(5):
+            self.group.set_pose_target(pose_goal)
 
-        plan = self.group.plan()
+            plan = self.group.plan()
+
+            if plan.joint_trajectory.joint_names != [] :
+                break
 
         if plan.joint_trajectory.joint_names == [] :
             print(False)
             return False
         else :
-            self.group.go(wait=True)
+            self.group.execute(plan)
             self.group.stop()
             self.group.clear_pose_targets()
             return True
 
-    def handler_robot_move_home(self, a):
-        return self.move_predef("home")
-
-    def handler_robot_move_calibration(self, a):
-        return self.move_predef("calibration")
-
-    def handler_robot_move_localisation(self, a):
-        return self.move_predef("localisation")
-
-    def handler_robot_move_parcking(self, a):
-        return self.move_predef("parcking")
+    def handler_robot_move_parking(self, a):
+        return self.move_predef("parking")
 
     def handler_get_fk(self, a):
         pose = useful_robot.get_fk()
         print(pose)
         print(useful_robot.pose_msg_to_homogeneous_matrix(pose))
-        return True
+        return pose
 
     def handler_set_speed_perentage(self, msg):
-        self.speed = msg.speed_percentage/100
-        self.group.set_max_velocity_scaling_factor(self.speed)
-        rospy.loginfo("Speed limited to " + str(msg.speed_percentage) + "%.")
+        self.set_speed(msg.speed_percentage)
         return []
+
+    def set_speed(self, speed):
+        self.speed = speed/100
+        self.group.set_max_velocity_scaling_factor(self.speed)
+        rospy.loginfo("Speed limited to " + str(speed) + "%.")
 
     def handler_robot_move_lin(self, msg):
         waypoints = [msg.Pose]
@@ -94,56 +121,27 @@ class Move_robot:
             self.group.clear_pose_targets()
             return True
 
-    def draw_square(self, a):
-        waypoints = []
-
-        wpose = self.group.get_current_pose().pose
-        wpose.position.x += 0.3
-        waypoints.append(copy.deepcopy(wpose))
-        wpose.position.y += 0.3
-        waypoints.append(copy.deepcopy(wpose))
-        wpose.position.x -= 0.3  
-        waypoints.append(copy.deepcopy(wpose))
-        wpose.position.y -= 0.3
-        waypoints.append(copy.deepcopy(wpose))
-
-        # We want the Cartesian path to be interpolated at a resolution of 1 cm
-        # which is why we will specify 0.01 as the eef_step in Cartesian
-        # translation.  We will disable the jump threshold by setting it to 0.0 disabling:
-        (plan, fraction) = self.group.compute_cartesian_path(
-                                        waypoints,   # waypoints to follow
-                                        0.01,        # eef_step
-                                        0.0)         # jump_threshold
-
-        # Note: We are just planning, not asking move_group to actually move the robot yet:
-        self.group.execute(plan, wait=True)
-
-        return []
-
     def move_picture(self, a):
-        return self.move_predef("picture")
+        res = self.move_predef("picture")
+        return res
 
     def move_camera(self, a):
-        return self.move_predef("camera")
+        res = self.move_predef("camera")
+        return res
+
+    def set_state(self, msg):
+        self.state = msg.state
+        return []
+
+    def handler_move_predef(self, msg):
+        return self.move_predef(msg.pos)
 
     def move_robot_server(self):
         s = rospy.Service('move_robot', Robot_move, self.handler_robot_move)
         rospy.loginfo("Server move robot ready !")
 
-        s1 = rospy.Service('move_robot_home', Robot_move_predef, self.handler_robot_move_home)
-        rospy.loginfo("Server move robot to home ready !")
-
-        s2 = rospy.Service('move_robot_calibration', Robot_move_predef, self.handler_robot_move_calibration)
-        rospy.loginfo("Server move robot to calibration ready !")
-
-        s3 = rospy.Service('move_robot_localisation', Robot_move_predef, self.handler_robot_move_localisation)
-        rospy.loginfo("Server move robot to localisation ready !")
-
-        s4 = rospy.Service('move_robot_parcking', Robot_move_predef, self.handler_robot_move_parcking)
-        rospy.loginfo("Server move robot to parcking ready !")
-
-        s5 = rospy.Service('move_picture', Robot_move_predef, self.move_picture)
-        rospy.loginfo("Server move robot to picture ready !")
+        s4 = rospy.Service('move_robot_parking', Robot_move_predef, self.handler_robot_move_parking)
+        rospy.loginfo("Server move robot to parking ready !")
 
         s6 = rospy.Service('move_camera', Robot_move_predef, self.move_camera)
         rospy.loginfo("Server move robot to camera ready !")
@@ -151,13 +149,16 @@ class Move_robot:
         s7 = s = rospy.Service('move_robot_lin', Robot_move, self.handler_robot_move_lin)
         rospy.loginfo("Server move robot ready !")
 
-        s_fk = rospy.Service('get_fk', Robot_move_predef, self.handler_get_fk)
+        s_fk = rospy.Service('get_fk', Get_fk, self.handler_get_fk)
 
         s_speed = rospy.Service('set_speed_percentage', Speed_percentage, self.handler_set_speed_perentage)
 
-        s_square = rospy.Service('move_square', Robot_do_square, self.draw_square)
+        s_state = rospy.Service("set_robot_state", Robot_set_state, self.set_state)
+
+        s_predef = rospy.Service("move_predef", Move_predef, self.handler_move_predef)
 
         rospy.loginfo("Robot ready to move !")
+        
 
     def move_predef(self, conf_name):
         target = self.group.get_named_target_values(conf_name)
@@ -175,6 +176,9 @@ class Move_robot:
             self.group.go(wait=True)
             self.group.stop()
             return True
+
+
+
 
 
 if __name__ == "__main__":

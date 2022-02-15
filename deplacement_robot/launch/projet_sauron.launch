@@ -17,5 +17,5 @@
 
     <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch"/>
 
-    <node name="move_robot_server" pkg="deplacement_robot" type="move_robot_server_demo_release4.py" args="$(arg speed_percentage)" output="screen"/>
+    <node name="move_robot_server" pkg="deplacement_robot" type="move_robot_server.py" args="$(arg speed_percentage)" output="screen"/>
 </launch>
