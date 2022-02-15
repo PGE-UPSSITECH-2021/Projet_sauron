@@ -11,14 +11,11 @@ def fonction_qualite(rayon_attendu,image_raw,debug,showResult = True,fast_algo= 
     px_to_mm = 0.04624277456
     mm_to_px = 21
     rayon_attendu_px = int(rayon_attendu*mm_to_px*2)  #ici on bosse en px
-    if(fast_algo):
-	rayon_attendu_px=int(rayon_attendu_px/5)
-    #image = cv2.resize(image,(520,388))
-
-    if(fast_algo):
+    if(fast_algo):	        
         #if fast we scale down the img
         height, width, _ = image_raw.shape 
         scale = 5
+        rayon_attendu_px=int(rayon_attendu_px/scale)
         dsize = (int(width/scale), int(height/scale))
         image_raw = cv2.resize(image_raw, dsize)
 
