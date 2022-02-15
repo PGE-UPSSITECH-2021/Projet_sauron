@@ -193,8 +193,4 @@ class analyseContour:
 			cv2.destroyAllWindows()
 		return isdefective, defect, contours
 
-if __name__ == "__main__":
-	#image = cv2.imread('test1_fl.bmp')
-	#isdefective,defect,resultat = analyseContour.caracterization(image,81,True)
-	#print(defect)
-	#print(resultat)
+
