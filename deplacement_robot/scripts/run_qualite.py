@@ -147,10 +147,10 @@ def get_path(plaque_pos, dist, d):
         h = np.vstack((h, [0,0,0,1]))
 
         rayon = d[k].rayon
-        pos=d[k].position
+        #pos=d[k].position
         msg = homogeneous_matrix_to_pose_msg(h)
 
-        points.append((msg, rayon, pos))
+        points.append((msg, rayon, m))
 
     return points
 
