@@ -13,6 +13,9 @@ from  geometry_msgs.msg import Pose
 from deplacement_robot.msg import Qualite, Trou_qualite
 from cv_bridge import CvBridge
 
+from tsp_solver.greedy import solve_tsp
+
+
 def run_qualite(plaque_pos, nom_plaque, step_folder, dist =  0.18, diametres = [5,7,12,18], pub=None):
     pub_state(pub, "Debut conformite.")
     pub_state(pub, "Calcul de la trajectoire.")
@@ -28,13 +31,13 @@ def run_qualite(plaque_pos, nom_plaque, step_folder, dist =  0.18, diametres = [
 
     # Service pour deplacer le robot a un point donne
     move_robot = rospy.ServiceProxy('move_robot', Robot_move)
-    # Service pour deplacer le robot a sa position de parcking
-    move_parcking = rospy.ServiceProxy('move_robot_parcking', Robot_move_predef)
+    # Service pour deplacer le robot a sa position de parking
+    move_parking = rospy.ServiceProxy('move_robot_parking', Robot_move_predef)
     # Service pour prendre une image
     capture_image = rospy.ServiceProxy("camera/capture", capture)
 
     pub_state(pub, "Deplacement a la position de parking")
-    move_parcking()
+    move_parking()
     pub_state(pub, "Deplacement termine")
 
     bridge = CvBridge()
@@ -97,8 +100,8 @@ def run_qualite(plaque_pos, nom_plaque, step_folder, dist =  0.18, diametres = [
 
     pub_state(pub, "Conformite finie, retour au parking")
 
-    # Retour a la position de parcking
-    move_parcking()
+    # Retour a la position de parking
+    move_parking()
 
     pub_state(pub, "Conformite terminee.")
 
@@ -122,10 +125,14 @@ def get_holes(file_path, diametres):
 
 def get_path(plaque_pos, dist, d):
     points = []
-            
-    keys = sorted(list(d.keys()))
+    
+    keys = d.keys()
 
-    for k in keys :
+    dist_keys = get_distance(keys)
+    order = solve_tsp(dist_keys)
+
+    for o in order :
+        k = keys[o]
         v = np.array(d[k].direction)
         m = np.array(k)/1000
         m = np.dot(plaque_pos, np.hstack((m, 1)))[:3]
@@ -164,6 +171,15 @@ def get_orientation_mat(tz):
     R = np.hstack((np.array([tx]).T, np.array([ty]).T, np.array([tz]).T))
 
     return R
+
+def get_distance(v):
+    v = np.array(v)
+    dist_l = []
+    for p in v:
+        dist_l.append(np.linalg.norm(v-p,axis=1))
+    dist_M = np.array(dist_l)
+    dist_M = dist_M.T
+    return dist_M
 
 if __name__ == "__main__":
     rospy.init_node('test_identification', anonymous=True)
