@@ -210,8 +210,6 @@ def identify(msg):
     except CvBridgeError as e:
         print(e)
 
-    print(variables.annotee.height)
-    print(variables.annotee.width)
 
     res = identificationResponse()
     res.points.points = variables.points
@@ -223,8 +221,34 @@ def identify(msg):
 
 
 def localisation(type, modele, photo, Mom, Moc, Mint, dist):
-    # Cintree
+    # tole cintree, tole plate, tole epaisse  
     res = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+
+    get_image()
+    try:
+        if(type == "tole plate"):
+            angle = float(read_cognex("GVE160"))
+            u = float(read_cognex("GVC160"))
+            v = float(read_cognex("GVD160"))
+        elif(type == "tole cintree"):
+            angle = float(read_cognex("GVE178"))
+            u = float(read_cognex("GVC178"))
+            v = float(read_cognex("GVD178"))
+        elif(type == "tole epaisse"):
+            angle = float(read_cognex("GVE196"))
+            u = float(read_cognex("GVC196"))
+            v = float(read_cognex("GVD196"))
+    except (ValueError, TypeError):
+        return None
+    
+    Mcm = np.linalg.inv(Moc) * Mom
+    s = Mcm[2,2]
+    XYZ = (1/s) * np.linalg.inv(Mcm) * np.linalg.inv(Mint) * np.array([[u],[v],[1]])
+
+    res[3:] = XYZ[:3]
+    res[0] = 0.0
+    res[1] = 0.0
+    res[2] = np.radians(angle)
 
     return res
 
