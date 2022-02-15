@@ -58,17 +58,17 @@ class Robot:
     def fin_prod(self):
         group = moveit_commander.MoveGroupCommander("manipulator")
 
-        parcking = group.get_named_target_values("parcking")
-        keys = parcking.keys()
+        parking = group.get_named_target_values("parking")
+        keys = parking.keys()
 
-        parcking_list = []
+        parking_list = []
         for k in sorted(keys):
-            parcking_list.append(parcking[k])        
+            parking_list.append(parking[k])        
 
-        parcking_list = np.round(parcking_list, 3)
+        parking_list = np.round(parking_list, 3)
         curent_state = np.round(group.get_current_joint_values(), 3)
 
-        if np.linalg.norm(np.array(parcking_list) - np.array(curent_state)) <= 0.2:
+        if np.linalg.norm(np.array(parking_list) - np.array(curent_state)) <= 0.2:
             self.set_robot_state("LIBRE INIT")
         else:
             self.set_robot_state("LIBRE NON INIT")
@@ -77,10 +77,10 @@ class Robot:
     def execute_initialisation(self, send_result=True):
         self.set_robot_state("INITIALISATION")
 
-        # Service pour deplacer le robot a sa position de parcking
-        move_parcking = rospy.ServiceProxy('move_robot_parcking', Robot_move_predef)
+        # Service pour deplacer le robot a sa position de parking
+        move_parking = rospy.ServiceProxy('move_robot_parking', Robot_move_predef)
 
-        move_parcking()
+        move_parking()
 
         rospack = rospkg.RosPack()
         folder_path = rospack.get_path("deplacement_robot")
