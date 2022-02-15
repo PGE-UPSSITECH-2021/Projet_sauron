@@ -32,6 +32,8 @@ def get_action(msg):
 			return 'S_DEPL'
 		if msg.action == 'Initialiser':
 			return 'S_INIT'
+		if msg.action == 'Calibrer':
+			return 'S_CALIB'
 
 def get_plaqueName(msg):
 	return msg.plaque
@@ -223,11 +225,16 @@ def run():
 		if command is not None:
 			print(command)
 
+		# Initialisation service
 		if command == 'S_INIT':
 			calib_ok = run_initialisation()
+
+		# Calibration service
+		elif command == 'S_CALIB':
+			calib_ok = run_calibration()
 		
 		# Location service
-		if command == 'S_LOC':
+		elif command == 'S_LOC':
 			loc_ok, id_ok, qual_ok = run_location(loc_ok, id_ok, qual_ok)
 
 		# Identification service
