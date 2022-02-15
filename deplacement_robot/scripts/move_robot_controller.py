@@ -52,6 +52,65 @@ def run_initialisation():
 def run_calibration() :
 	return robot.execute_calibration()
 
+def run_location(loc_ok, id_ok, qual_ok, send_result=True):
+	robot.set_robot_state("EN PRODUCTION")
+
+	# Reset all states
+	loc_ok = id_ok = qual_ok = False
+
+	# Run loc service and get loc state
+	#loc_ok = ndt.dummy_location()
+	loc_ok = robot.execute_localisation(nom_plaque=get_plaqueName(ihm_msg), send_result=send_result)
+
+	if send_result:
+		robot.fin_prod()
+
+	# Return states
+	return loc_ok, id_ok, qual_ok
+
+def run_identification(loc_ok, id_ok, qual_ok, send_result=True):
+	robot.set_robot_state("EN PRODUCTION")
+	# Run loc service if previous loc state reset
+	while not loc_ok:
+		loc_ok, id_ok, qual_ok = run_location(loc_ok, id_ok, qual_ok, send_result=False)
+
+	# Reset id, qual states
+	id_ok = qual_ok = False
+
+	# Check states conditions to run id
+	assert loc_ok
+
+	# Run id service and get id state
+	id_ok = robot.execute_identification(nom_plaque=get_plaqueName(ihm_msg), diametres=get_diametres(ihm_msg), send_result=send_result)
+
+	if send_result:
+		robot.fin_prod()
+
+	# Return states
+	return loc_ok, id_ok, qual_ok
+
+def run_quality(loc_ok, id_ok, qual_ok):
+	robot.set_robot_state("EN PRODUCTION")
+
+	# Run id service if previous id state reset
+	# Will run loc service if previous loc state reset
+	while not id_ok:
+		loc_ok, id_ok, qual_ok = run_identification(loc_ok, id_ok, qual_ok, send_result=False)
+
+	# Reset qual state
+	qual_ok = False
+
+	# Check states conditions to run qual
+	assert loc_ok, id_ok
+
+	# Run qual service and get qual state
+	qual_ok = robot.execute_qualite(nom_plaque=get_plaqueName(ihm_msg), diametres=get_diametres(ihm_msg))
+
+	robot.fin_prod()
+
+	# Return states
+	return loc_ok, id_ok, qual_ok
+
 # To write into a config file, loaded via json.load()
 TOPICS = {'IHM': {'name': 'message_ihm_run', 'datatype': IHM_msg, 'callback': callback_ihm}}
 
@@ -159,66 +218,6 @@ def run():
 		command = get_action(ihm_msg)
 
 		###########################################
-
-		def run_location(loc_ok, id_ok, qual_ok, send_result=True):
-			robot.set_robot_state("EN PRODUCTION")
-
-			# Reset all states
-			loc_ok = id_ok = qual_ok = False
-
-			# Run loc service and get loc state
-			#loc_ok = ndt.dummy_location()
-			loc_ok = robot.execute_localisation(nom_plaque=get_plaqueName(ihm_msg), send_result=send_result)
-
-			if send_result:
-				robot.fin_prod()
-
-			# Return states
-			return loc_ok, id_ok, qual_ok
-
-		def run_identification(loc_ok, id_ok, qual_ok, send_result=True):
-			robot.set_robot_state("EN PRODUCTION")
-			# Run loc service if previous loc state reset
-			while not loc_ok:
-				loc_ok, id_ok, qual_ok = run_location(loc_ok, id_ok, qual_ok, send_result=False)
-
-			# Reset id, qual states
-			id_ok = qual_ok = False
-
-			# Check states conditions to run id
-			assert loc_ok
-
-			# Run id service and get id state
-			id_ok = robot.execute_identification(nom_plaque=get_plaqueName(ihm_msg), diametres=get_diametres(ihm_msg), send_result=send_result)
-
-			if send_result:
-				robot.fin_prod()
-
-			# Return states
-			return loc_ok, id_ok, qual_ok
-
-		def run_quality(loc_ok, id_ok, qual_ok):
-			robot.set_robot_state("EN PRODUCTION")
-
-			# Run id service if previous id state reset
-			# Will run loc service if previous loc state reset
-			while not id_ok:
-				loc_ok, id_ok, qual_ok = run_identification(loc_ok, id_ok, qual_ok, send_result=False)
-
-			# Reset qual state
-			qual_ok = False
-
-			# Check states conditions to run qual
-			assert loc_ok, id_ok
-
-			# Run qual service and get qual state
-			qual_ok = robot.execute_qualite(nom_plaque=get_plaqueName(ihm_msg), diametres=get_diametres(ihm_msg))
-
-			robot.fin_prod()
-
-			# Return states
-			return loc_ok, id_ok, qual_ok
-
 
 		# Debug
 		if command is not None:
