@@ -17,6 +17,10 @@ import matplotlib.pyplot as plt
 
 
 
+def pub_state(pub, msg):
+    if not pub is None:
+        pub.publish(msg)
+
 def localiser(type_plaque,model_path,image,M_hom_3D,M_pass_oc,M_intr,coeff_distr):
     try:
         trans,rot,matrice_extr,bryant = main_loc(type_plaque,model_path,image,M_hom_3D,M_pass_oc,M_intr,coeff_distr)
@@ -25,8 +29,8 @@ def localiser(type_plaque,model_path,image,M_hom_3D,M_pass_oc,M_intr,coeff_distr
     except(UntrustworthyLocalisationError,MatchingError),e:
         return str(e)
 
-def move_to_point(p):
-    print("moving to point "+str(p))
+def move_to_point(p,pub=None):
+    pub_state(pub,"moving to point "+str(p))
     move_robot = rospy.ServiceProxy("move_predef", Move_predef)
     move_robot("localisation_"+str(p))
    
@@ -56,7 +60,7 @@ def get_image():
 
 
 
-def run_localisation(path):
+def run_localisation(path,pub=None):
     distortion_coefs = np.array([   1.55284357e-01,
                                     -3.07067931e+00,  
                                     5.16274059e-03, 
@@ -82,24 +86,24 @@ def run_localisation(path):
                 trans, rot, extrinseque, bryant = res
                 print(extrinseque)
                 print(bryant)
-                print("plaque localisée avec sucess")
+                pub_state(pub,"plaque localisée avec sucess")
                 move_parking()
+                pub_state(pub,"moving back to parking")
                 #send_results([trans,rot])
-                #send_results[1,2,3,4,5,6]
                 break
         except (TypeError,ValueError) , e:
-            print("plaque non trouvée")
+            pub_state(pub,"plaque non trouvée")
 	    print(e)
 
-	except MatchingError as e:
-            print("Erreur de matching")
+	    except MatchingError as e:
+            pub_state(pub,"Erreur de matching")
 
         except UntrustworthyLocalisationError as e:
-	    print("L'erreur de localisation est trop grande")
+	        pub_state(pub,"L'erreur de localisation est trop grande")
 	
-	except Exception as e:
-            print("Autre erreurs")
-	    print(type(e))
+	    except Exception as e:
+            pub_state(pub,"Autre erreurs")
+	        print(type(e))
 
   
 
