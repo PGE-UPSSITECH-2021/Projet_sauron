@@ -28,10 +28,12 @@ def fonction_qualite(rayon_attendu,image_raw,debug,showResult = True,fast_algo= 
     image_processed,offset_,nohole=filtrage.preprocess(image_raw,fast_algo)
 	
     if(nohole):
-        plt.imshow(cv2.resize(image_result,(520,388)))
+        resized_image = cv2.resize(image_raw,(520,388))
+        cv2.circle(resized_image,(int(520/2),int(388/2)),50,(255,0,0),1) #dessine cercle
+        plt.imshow(resized_image)
         plt.draw()
-        plt.pause(0.001)
-        return True,"Trou non detecte",image_raw
+        plt.pause(0.001)        
+        return True,"Trou non detecte",resized_image
 	
 
     if(debug):
