@@ -11,22 +11,25 @@ from cv_bridge import CvBridge
 from useful_robot import pose_msg_to_homogeneous_matrix,get_fk
 from pyquaternion import Quaternion
 from main_loc import main_localisation as main_loc
-from localisation_exception import UntrustworthyLocalisationError,MatchingError
+from localisation_exception import UntrustworthyLocalisationError, MatchingError
 from localisation_cognex import localisation
+import matplotlib.pyplot as plt
+
 
 
 def localiser(type_plaque,model_path,image,M_hom_3D,M_pass_oc,M_intr,coeff_distr):
     try:
         trans,rot,matrice_extr,bryant = main_loc(type_plaque,model_path,image,M_hom_3D,M_pass_oc,M_intr,coeff_distr)
-        trans,rot,matrice_extr,bryant = localisation(type_plaque,model_path,image,M_hom_3D,M_pass_oc,M_intr,coeff_distr)
+        #trans,rot,matrice_extr,bryant = localisation(type_plaque,model_path,image,M_hom_3D,M_pass_oc,M_intr,coeff_distr)
         return trans,rot,matrice_extr,bryant
     except(UntrustworthyLocalisationError,MatchingError),e:
         return str(e)
 
 def move_to_point(p):
+    print("moving to point "+str(p))
     move_robot = rospy.ServiceProxy("move_predef", Move_predef)
     move_robot("localisation_"+str(p))
-    print("moving to point "+str(p))
+   
 
 
 def send_results(pts):
@@ -74,7 +77,8 @@ def run_localisation(path):
         Mtrix_hom_3D = pose_msg_to_homogeneous_matrix(pose_get_fk)
         try:
             res = localiser(type_plaque="Tole plate",model_path=path,image=img,M_hom_3D=Mtrix_hom_3D,M_pass_oc=M_pass_oc,M_intr=intrinsic_mat,coeff_distr=distortion_coefs)
-	        if not res is None:
+	   
+	    if not res is None:
                 trans, rot, extrinseque, bryant = res
                 print(extrinseque)
                 print(bryant)
@@ -83,9 +87,20 @@ def run_localisation(path):
                 #send_results([trans,rot])
                 #send_results[1,2,3,4,5,6]
                 break
-        except TypeError as e:
+        except (TypeError,ValueError) , e:
             print("plaque non trouvée")
-	        print(e)
+	    print(e)
+
+	except MatchingError as e:
+            print("Erreur de matching")
+
+        except UntrustworthyLocalisationError as e:
+	    print("L'erreur de localisation est trop grande")
+	
+	except Exception as e:
+            print("Autre erreurs")
+	    print(type(e))
+
   
 
 

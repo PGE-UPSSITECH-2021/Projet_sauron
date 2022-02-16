@@ -7,6 +7,7 @@ from pnp_solving import process_pnp, calcule_erreur
 from matUtils import R_from_vect
 from extractHoles import getAllCircles
 import sys
+
 from matchPoints import generatePointLines, removeNonSimilarLines, formatPointsForPnP
 
 def main_localisation(  type_plaque, 
@@ -31,7 +32,7 @@ def main_localisation(  type_plaque,
 
 
     image_points = hough(image)
-
+    
     #================================ Recuperation des positions des trous dans le repere de l'objet ================================
 
     try:
@@ -50,6 +51,8 @@ def main_localisation(  type_plaque,
         readyForPnP_2D, readyForPnP_3D = formatPointsForPnP(lines2D,lines3D)
 
     except Exception as e:
+        print("================= Matching error ===============")
+        #raise
         raise MatchingError(str(e))
 
     # S'assurer que les objects points image points sont de taille (n, 3) et (n, 2) avec n >= 4
@@ -97,9 +100,10 @@ def main_localisation(  type_plaque,
     
     # Rc * Mco --> Ro * Mom --> Rm 
     matrice_extrinseque[:3, 3] = matrice_extrinseque[:3, 3]/1000.
-    print(matrice_extrinseque)
-    extrinseque_outils = np.dot(matrice_extrinseque , np.linalg.inv(matrice_passage_outils_cam))
-    extrinseque_monde = np.dot(extrinseque_outils, np.linalg.inv(matrice_homogene_3D_outils))
+    assert matrice_extrinseque.shape==(4,4)
+
+    extrinseque_monde = np.dot(matrice_homogene_3D_outils,matrice_extrinseque)
+    print("extrinseque_pnp :\n{}\nmonde-outil :\n{}".format(matrice_extrinseque,matrice_homogene_3D_outils))
     
 
     # Calcul des angles de Brillant    

@@ -8,4 +8,4 @@ class UntrustworthyLocalisationError(Exception):
 class MatchingError(Exception):
     def __init__(self, message):
         self.message = message
-        super(MatchingError, self).__init__(message)
+        super(MatchingError, self).__init__()
