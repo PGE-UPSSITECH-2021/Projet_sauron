@@ -121,7 +121,7 @@ def get_points_projection(intrinsic, extrinsic, P0):
     P0 = np.hstack((P0, 1))
     Pc = np.dot(extrinsic,P0)
     Pi = 1/Pc[2]*np.dot(intrinsic, Pc[:3])
-    pass
+    return Pi
 
 def get_poses(cylinders_dict, plaque_pos, dist):
     poses = []

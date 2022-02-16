@@ -49,11 +49,9 @@ class Move_robot:
         rate = rospy.Rate(10)
         publisher = rospy.Publisher("robot_state", String, queue_size=10)
         pub_cam = rospy.Publisher("cam_state", String, queue_size=10)
-        pub_secu = rospy.Publisher("securite_state", String, queue_size=10)
         while not rospy.is_shutdown():
             publisher.publish(self.state)
             pub_cam.publish(self.camera_state)
-            pub_secu.publish("OK")
             rate.sleep()
 
     def camera_state_listener(self, msg) :
