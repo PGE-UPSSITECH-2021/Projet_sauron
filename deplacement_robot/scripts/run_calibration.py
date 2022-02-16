@@ -1,7 +1,7 @@
 from deplacement_robot.srv import Robot_move_predef
 import rospy
 from communication.srv import capture
-from deplacement_robot.srv import Robot_move_predef
+from deplacement_robot.srv import Robot_move_predef,Move_predef
 from cv_bridge import CvBridge
 import cv2 as cv
 from calib_finale import calibration
@@ -17,8 +17,8 @@ def run_calibration():
     
 
 def move_to_point(p):
-    move_robot = rospy.ServiceProxy('calibration_'+str(p),Robot_move_predef)
-    move_robot()
+    move_robot = rospy.ServiceProxy("move_predef",Move_predef)
+    move_robot("calibration_"+str(p))
     print("moving to point"+str(p))
 
 def get_image():
