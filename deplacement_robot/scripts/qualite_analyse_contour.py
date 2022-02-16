@@ -178,7 +178,7 @@ class analyseContour:
 			defect += "Rayon trop petit"
 		elif(rayon>circle[2]*maxprct):
 			isdefective=True
-			defect += "Rayon trop big grand"
+			defect += "Rayon trop grand"
 		
 
 		if affichage:
