@@ -128,55 +128,57 @@ class analyseContour:
 		minprct =  0.85
 		maxprct =  1.15
 		#entre hough et les contours (la forme est-elle obstruee ou fissuree ?)
+		isDeforme = False
 		if (aire < minprct*np.pi*((circle[2])**2)):
-			#print(aire," vs ",minprct*np.pi*((circle[2])**2))
+			print(aire," vs ",minprct*np.pi*((circle[2])**2))
 			isdefective = True
-			#Obstruction = area of circle > real hole circle
-			defect += "Obstruction"
+			defect += "Obstruction\n"
 		if (aire > maxprct*np.pi*((circle[2])**2)):
-			#print(aire," vs ",maxprct*np.pi*((circle[2])**2))
-			isdefective=True
-			#Tear = area of circle < area of real hole
-			defect += "Fissure"
+			print(aire," vs ",maxprct*np.pi*((circle[2])**2))
+			isdefective=True			
+			defect += "Fissure\n"
 		
 		if(moments['nu20']< minprct*1/(4*np.pi) or moments['nu20']>1.04*1/(4*np.pi)):
 			isdefective = True
-			defect += "Deformation\n"
+			isDeforme = True
+			
 
 		if(moments['nu02']< minprct*1/(4*np.pi) or moments['nu02']>1.04*1/(4*np.pi)):
 			isdefective = True
-			defect += "Deformation\n"   
+			isDeforme = True   
 
 		if(abs(moments['nu11'])>10**-2):
 			isdefective=True
-			defect += "Deformation\n"
+			isDeforme = True
 
 		if(abs(moments['nu21'])>10**-3):
 			isdefective=True
-			defect += "Deformation\n"
+			isDeforme = True
 
 		if(abs(moments['nu12'])>10**-3):
 			isdefective=True
-			defect += "Deformation\n"
+			isDeforme = True
 
 		if(abs(moments['nu30'])>10**-3):
 			isdefective=True
-			defect += "Deformation\n"
+			isDeforme = True
 
 		if(abs(moments['nu03'])>10**-3):
 			isdefective=True
-			defect += "Deformation\n"
+			isDeforme = True
 
+		if(isDeforme):
+			defect += "Deformation\n"
 		#entre hough et le parametre de la fonction (le rayon en parametre est-il correct ?)
 		minprct = 0.85
 		maxprct = 1.15
 
 		if (circle[2]*minprct>rayon):
 			isdefective=True
-			defect += "Rayon trop petit"  # function parameter/cercle ({}/{})\n".format(rayon,float(circle[2]))
+			defect += "Rayon trop petit"
 		elif(rayon>circle[2]*maxprct):
 			isdefective=True
-			defect += "Rayon trop grand"  # function parameter/cercle ({}/{})\n".format(rayon,float(circle[2]))
+			defect += "Rayon trop big grand"
 		
 
 		if affichage:
@@ -193,4 +195,8 @@ class analyseContour:
 			cv2.destroyAllWindows()
 		return isdefective, defect, contours
 
-
+if __name__ == "__main__":
+	image = cv2.imread('analyse_contour/81radius.jpg')
+	defect,resultat = analyseContour.caracterization(image,81,True)
+	print(defect)
+	print(resultat)

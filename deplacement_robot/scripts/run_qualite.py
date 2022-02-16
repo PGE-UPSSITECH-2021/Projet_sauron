@@ -7,7 +7,7 @@ import rospy
 import rospkg
 from deplacement_robot.srv import Robot_move, Robot_move_predef
 from communication.srv import capture
-from qualite_interface import fonction_qualite
+from qualite_interface import fonction_qualite,run_qualite_image_globale
 
 from  geometry_msgs.msg import Pose
 from deplacement_robot.msg import Qualite, Trou_qualite
@@ -46,7 +46,7 @@ def run_qualite(plaque_pos, nom_plaque, step_folder, dist =  0.18, diametres = [
     results_qualite = {} # results_qualite = {diametre:{(x,y,z):(msg_ROS,conforme)}}
 
     nbPose = len(points)
-
+    isDefective_all = []
     # Effectuer la trajectoire
     for i,p in enumerate(points):
         # On arrete si le node est kill
@@ -80,7 +80,7 @@ def run_qualite(plaque_pos, nom_plaque, step_folder, dist =  0.18, diametres = [
         assert (len(cv_image.shape) == 3),"(1) probleme dimensions, image BGR ?"
 
         isdefective, defect, image = fonction_qualite(p[1],cv_image,debug=False,fast_algo=True)
-
+        isDefective_all.append(isdefective)
 
         image_ros_result = bridge.cv2_to_compressed_imgmsg(image)
 
@@ -101,6 +101,10 @@ def run_qualite(plaque_pos, nom_plaque, step_folder, dist =  0.18, diametres = [
         #print("Print diametre pour test : ",trou_qualite_msg.diam)
         #print("press enter")
         #raw_input()
+    
+    # TODO
+    #Fonction image globale qualite
+    #run_qualite_image_globale(liste_points_px,image_globale,isDefective_all)
 
     #returned_msg.image=None #TODO
     returned_msg.trous = trous
