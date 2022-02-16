@@ -11,6 +11,8 @@ from geometry_msgs.msg import Pose
 
 from cv_bridge import CvBridge
 
+import cv2
+
 import matplotlib.pyplot as plt
 
 def run_identification(plaque_pos, nom_plaque, step_folder, diametres, intrinsec, dist =  1.03, seuil=100, pub = None):
@@ -76,7 +78,16 @@ def run_identification(plaque_pos, nom_plaque, step_folder, diametres, intrinsec
             point_im.append((p.x, p.y))
 
         pos_cam = pose_msg_to_homogeneous_matrix(get_fk())
-        projection_3D_2D(pose(1), pos_cam, intrinsec, points_im, decalage*i) #Liste3D, Mmc, Mint, Liste2D, decY
+        point2D = projection_3D_2D(pose(1), pos_cam, intrinsec, points_im, decalage*i)
+
+        img = res_image_annotee[-1]
+
+        for p in point2D:
+            cv.circle(img, (p[0],p[1]), 2, (0,0,255), 6)
+
+        plt.imshow(img)
+        plt.draw()
+        plt.pause(0.001)
     
     pub_state(pub, "Identification finie, retour position parking")
 
