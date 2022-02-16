@@ -153,7 +153,7 @@ class Robot:
         # Reset des resultat de la qualite
         self.res_qualite = {}
 
-        msg,_ = run_identification(self.plaque_pos, nom_plaque, self.step_folder, diametres, pub=self.pub_prod_state) #TODO get image global
+        msg,_ = run_identification(self.plaque_pos, nom_plaque, self.step_folder, diametres, self.intrinsic, pub=self.pub_prod_state) #TODO get image global
 
         if send_result:
             self.pub_result.publish(True)

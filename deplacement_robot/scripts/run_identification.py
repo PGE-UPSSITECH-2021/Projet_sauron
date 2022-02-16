@@ -13,7 +13,7 @@ from cv_bridge import CvBridge
 
 import matplotlib.pyplot as plt
 
-def run_identification(plaque_pos, nom_plaque, step_folder, diametres, dist =  1.03, seuil=100, pub = None):
+def run_identification(plaque_pos, nom_plaque, step_folder, diametres, intrinsec, dist =  1.03, seuil=100, pub = None):
     pub_state(pub, "Debut identification")
     pub_state(pub, "Calcul de la trajectoire")
 
@@ -56,7 +56,7 @@ def run_identification(plaque_pos, nom_plaque, step_folder, diametres, dist =  1
             exit()
         pub_state(pub, "Deplacement a la position " + str(i+1) + "/" + str(nbPose))
         move_parking()
-        res_move = move_robot(pose)
+        res_move = move_robot(pose(0))
 
         if not res_move.res :
             pub_state(pub, "Position inatteignable. Passage au position suivante")
@@ -70,6 +70,13 @@ def run_identification(plaque_pos, nom_plaque, step_folder, diametres, dist =  1
             res_points.append(res_identification.points.points)
             res_image_originale.append(bridge.imgmsg_to_cv2(res_identification.originale, 'bgr8'))
             res_image_annotee.append(bridge.imgmsg_to_cv2(res_identification.annotee, 'bgr8'))
+
+        points_im = []
+        for p in res_identification.points.points:
+            point_im.append((p.x, p.y))
+
+        pos_cam = pose_msg_to_homogeneous_matrix(get_fk())
+        projection_3D_2D(pose(1), pos_cam, intrinsec, points_im, decalage*i) #Liste3D, Mmc, Mint, Liste2D, decY
     
     pub_state(pub, "Identification finie, retour position parking")
 
@@ -95,7 +102,6 @@ def run_identification(plaque_pos, nom_plaque, step_folder, diametres, dist =  1
 
             trous.append((p.x,p.y))
             points_msg.append(p)
-
 
     msg = Identification()
     msg.trous = points_msg
@@ -123,6 +129,28 @@ def get_points_projection(intrinsic, extrinsic, P0):
     Pi = 1/Pc[2]*np.dot(intrinsic, Pc[:3])
     return Pi
 
+
+def get_closer(pos2D, Liste2D, decY):
+    x = pos2D[0]
+    y = pos2D[1]
+
+    res = [x, y, np.Inf]
+    for u, v in Liste2D:
+        if(res[2] > np.sqrt((x-u)^2 + (y-v-decY)^2) and (x-u) < 150 and (y-v-decY) < 150):
+            res = [u, v, np.sqrt((x-u)^2 + (y-v-decY)^2)]
+    
+    return res[:2]
+
+
+def projection_3D_2D(Liste3D, Mmc, Mint, Liste2D, decY):
+    Mcm = np.linalg.inv(Mmc)
+    pos2D = []
+    for x, y, z in Liste3D:
+        proj = get_points_projection(Mint, Mcm, [x,y,z])
+        pos2D.append(get_closer(proj, Liste2D, decY))
+    
+    return pos2D
+
 def get_poses(cylinders_dict, plaque_pos, dist):
     poses = []
     poses_d = {}
@@ -131,9 +159,9 @@ def get_poses(cylinders_dict, plaque_pos, dist):
         cylinders = cylinders_dict[key]
         point = []
         for c in cylinders :
-            point.append(c.position)
+            point.append(np.array(c.position)/1000)
 
-        m = np.mean(point, 0)/1000
+        m = np.mean(point, 0)
         m = np.dot(plaque_pos, np.hstack((m, 1)))[:3]
 
         p1 = m + dist * np.array(key)
@@ -154,7 +182,7 @@ def get_poses(cylinders_dict, plaque_pos, dist):
         pt = np.vstack((pt, [0,0,0,1]))
         msg = homogeneous_matrix_to_pose_msg(pt)
 
-        poses_d[tuple(p[0])] = msg
+        poses_d[tuple(p[0])] = (msg, point)
         
     keys = poses_d.keys()
     for key in sorted(list(keys)):
@@ -194,4 +222,9 @@ if __name__ == "__main__":
     R[2,3] = -0.270 + 0.275
     rospack = rospkg.RosPack()
     cwd = rospack.get_path("deplacement_robot")
-    run_identification(R, "Plaque_1", cwd + "/plaques", [5,7,12,18])
+
+    intrinsec = np.array([  [4.78103205e+03, 0.00000000e+00, 1.20113948e+03],
+                            [0.00000000e+00, 4.77222528e+03, 1.14533714e+03],
+                            [0.00000000e+00, 0.00000000e+00, 1.00000000e+00]])
+
+    run_identification(R, "Plaque_1", cwd + "/plaques", [5,7,12,18], intrinsec)
