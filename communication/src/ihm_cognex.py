@@ -2,7 +2,6 @@
 # coding: utf-8
 
 from Tkinter import *
-from PIL import Image
 import rospy
 import telnetlib
 from ftplib import FTP
@@ -13,11 +12,11 @@ import numpy as np
 from variables_cognex import Variables
 from std_msgs.msg import Bool
 from communication.msg import Liste_points, Points
-from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 from communication.srv import capture
 from communication.srv import identification, identificationResponse
 import numpy as np
+from time import sleep
 
 global variables
 variables = Variables()
@@ -38,6 +37,7 @@ def check_connexion(func):
         except ftplib.all_errors:
             variables.pub_ok.publish(False)
             cognex_connect()
+            return func(*args, **kwargs)
 
     return wrap
 
@@ -75,6 +75,8 @@ def read_cognex(case):
     # Read of the returned value if the command did not fail
     val = variables.tn.expect(["\r\n"], timeout=3)[2]
     val = val[:len(val)-2]
+    if(val == ""):
+        raise EOFError('No answer from camera')
     # Log info to see what is happening
     rospy.loginfo("Com : "+case+" -- "+"Com OK: "+errorCode[0]+" -- "+"Com Val : "+val+"\r\n")
     return val
@@ -242,15 +244,45 @@ def localisation(type, modele, photo, Mom, Moc, Mint, dist):
         return None
     
     Mcm = np.linalg.inv(Moc) * Mom
-    s = Mcm[2,2]
-    XYZ = (1/s) * np.linalg.inv(Mcm) * np.linalg.inv(Mint) * np.array([[u],[v],[1]])
+    XYZ = Mcm[2,2] * np.linalg.inv(Mcm) * np.linalg.inv(Mint) * np.array([[u],[v],[1]])
 
-    res[3:] = XYZ[:3]
-    res[0] = 0.0
-    res[1] = 0.0
-    res[2] = np.radians(angle)
+    res[:3] = XYZ[:3]
+    res[3] = np.radians(angle)
+    res[4] = 0.0
+    res[5] = 0.0
 
     return res
+
+
+
+def get_points_projection(intrinsic, extrinsic, P0):
+    # [xi,yi,1] = 1/z*[intrinseque].[extrinseque].[point]
+    P0 = np.hstack((P0, 1))
+    Pc = np.dot(extrinsic,P0)
+    Pi = 1/Pc[2]*np.dot(intrinsic, Pc[:3])
+    return Pi
+
+
+def get_closer(pos2D, Liste2D, decY):
+    x = pos2D[0]
+    y = pos2D[1]
+
+    res = [x, y, np.Inf]
+    for u, v in Liste2D:
+        if(res[2] > np.sqrt((x-u)^2 + (y-v-decY)^2) and (x-u) < 150 and (y-v-decY) < 150):
+            res = [u, v, np.sqrt((x-u)^2 + (y-v-decY)^2)]
+    
+    return res[:2]
+
+
+def projection_3D_2D(Liste3D, Mmc, Mint, Liste2D, decY):
+    Mcm = np.linalg.inv(Mmc)
+    pos2D = []
+    for x, y, z in Liste3D:
+        proj = get_points_projection(Mint, Mcm, [x,y,z])
+        pos2D.append(get_closer(proj, Liste2D, decY))
+    
+    return pos2D
 
 
 
@@ -398,6 +430,8 @@ prev_frame_time = time.time()
 new_frame_time = 0
 
 while(not rospy.is_shutdown()):
+    read_cognex("GVG003")
+    sleep(0.1)
     if variables.render :
         # Get image from the camera
         img = get_image()

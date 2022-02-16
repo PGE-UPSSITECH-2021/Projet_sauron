@@ -8,7 +8,7 @@ from deplacement_robot.srv import Robot_move, Robot_move_predef
 def run_pointage(dict_points, diametres, pub=None):
     pub_state(pub, "Debut pointage")
 
-    ### Récupérations des points à parcourir et tri dans l'ordre optimal
+    ### Recuperations des points a parcourir et tri dans l'ordre optimal
     pub_state(pub, "Calcul de la trajectoire")
     # path =  msg_ROS[]
     path = find_path(dict_points, diametres)
@@ -60,7 +60,7 @@ def find_path(dict_points, diametres):
     # selected_pose = {(x,y,z):msg_ROS}
     selected_pose = {}
 
-    # Récuperation des positions avec le bon diametre et conforme
+    # Recuperation des positions avec le bon diametre et conforme
     for d in dict_points:
         if d in diametres :
             poses = dict_points[d] # {(x,y,z):(msg_ROS,conforme)}

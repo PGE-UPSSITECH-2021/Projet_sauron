@@ -57,7 +57,7 @@ def run_qualite(plaque_pos, nom_plaque, step_folder, dist =  0.18, diametres = [
         # Le robot se deplace au point p
         resp1 = move_robot(p[0])
 
-        if not res:
+        if not resp1:
             # Si le deplacement echou on passe au point suivant
             pub_state(pub, "Position inatteignable. Passage au position suivante")
             rospy.logwarn("Point inatteignable. Passage au point suivant.")

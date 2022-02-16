@@ -3,7 +3,6 @@
 import rospy
 from deplacement_robot.msg import IHM_msg
 
-import node_test as ndt
 from robot import Robot
 
 global ihm_data
@@ -61,7 +60,6 @@ def run_location(loc_ok, id_ok, qual_ok, send_result=True):
 	loc_ok = id_ok = qual_ok = False
 
 	# Run loc service and get loc state
-	#loc_ok = ndt.dummy_location()
 	loc_ok = robot.execute_localisation(nom_plaque=get_plaqueName(ihm_msg), send_result=send_result)
 
 	if send_result:
@@ -221,7 +219,7 @@ def run():
 		while not all_sys_ok:
 			# all_sys_ok = service_templace(dummy_check)
 			# all_sys_ok = dummy_check()
-			all_sys_ok = ndt.dummy_check()
+			all_sys_ok = True
 
 		# Get message from ihm
 		command = get_action(ihm_msg)
