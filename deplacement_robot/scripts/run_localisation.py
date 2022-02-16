@@ -31,12 +31,14 @@ def move_to_point(p):
 
 def send_results(pts):
     message = Localisation()
+    bridge=CvBridge()
     message.x = pts[0]
     message.y = pts[1]
     message.z = pts[2]
     message.a = pts[3]
     message.b = pts[4]
     message.g = pts[5]
+    message.image = bridge.cv2_to_compressed_imgmsg(get_image())
 
 def get_image():
     #capturer l'image
@@ -63,6 +65,7 @@ def run_localisation(path):
                                 [0.00000000e+00, 0.00000000e+00, 1.00000000e+00]])
     
     M_pass_oc = np.eye(4)
+    move_parking = rospy.ServiceProxy('move_robot_parking', Robot_move_predef)
     for i in range(4):
         move_to_point(i+1)
         #capturer l'image
@@ -75,6 +78,8 @@ def run_localisation(path):
                 trans, rot, extrinseque, bryant = res
                 print(extrinseque)
                 print(bryant)
+                print("plaque localisée avec sucess")
+                move_parking()
                 #send_results([trans,rot])
                 #send_results[1,2,3,4,5,6]
                 break
