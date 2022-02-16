@@ -29,7 +29,7 @@ def get_action(msg):
 		if msg.action == 'Verifier conformite':
 			return 'S_QUAL'
 		if msg.action == 'Deplacer le robot':
-			return 'S_DEPL'
+			return 'S_POINT'
 		if msg.action == 'Initialiser':
 			return 'S_INIT'
 		if msg.action == 'Calibrer':
@@ -112,6 +112,13 @@ def run_quality(loc_ok, id_ok, qual_ok):
 
 	# Return states
 	return loc_ok, id_ok, qual_ok
+
+def run_pointage():
+	robot.set_robot_state("EN PRODUCTION")
+
+	robot.execute_pointage(nom_plaque=get_plaqueName(ihm_msg), diametres=get_diametres(ihm_msg))
+
+	robot.fin_prod()
 
 # To write into a config file, loaded via json.load()
 TOPICS = {'IHM': {'name': 'message_ihm_run', 'datatype': IHM_msg, 'callback': callback_ihm}}
@@ -244,6 +251,9 @@ def run():
 		# Quality service
 		elif command == 'S_QUAL':
 			loc_ok, id_ok, qual_ok = run_quality(loc_ok, id_ok, qual_ok)
+
+		elif command == 'S_POINT':
+			run_pointage()
 
 		# Pause service
 		elif command == 'PAUSE':

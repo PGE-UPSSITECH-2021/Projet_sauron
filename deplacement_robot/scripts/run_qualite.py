@@ -5,7 +5,7 @@ from useful_robot import rotation_between_vect, homogeneous_matrix_to_pose_msg
 import numpy as np
 import rospy
 import rospkg
-from deplacement_robot.srv import Robot_move, Robot_move_predef, Robot_set_state
+from deplacement_robot.srv import Robot_move, Robot_move_predef
 from communication.srv import capture
 from qualite_interface import fonction_qualite
 
@@ -43,6 +43,7 @@ def run_qualite(plaque_pos, nom_plaque, step_folder, dist =  0.18, diametres = [
     bridge = CvBridge()
     returned_msg = Qualite()
     trous=[]
+    results_qualite = {} # results_qualite = {diametre:{(x,y,z):(msg_ROS,conforme)}}
 
     nbPose = len(points)
 
@@ -55,6 +56,12 @@ def run_qualite(plaque_pos, nom_plaque, step_folder, dist =  0.18, diametres = [
         pub_state(pub, "Deplacement a la position " + str(i+1) + "/" + str(nbPose))
         # Le robot se deplace au point p
         resp1 = move_robot(p[0])
+
+        if not res:
+            # Si le deplacement echou on passe au point suivant
+            pub_state(pub, "Position inatteignable. Passage au position suivante")
+            rospy.logwarn("Point inatteignable. Passage au point suivant.")
+            continue
 
         pub_state(pub, "Deplacement termine")
 
@@ -86,6 +93,10 @@ def run_qualite(plaque_pos, nom_plaque, step_folder, dist =  0.18, diametres = [
 
         trous.append(trou_qualite_msg)
 
+        dict_res_qual = results_qualite.get(p[1],{})
+        dict_res_qual[p[2]] = (p[0],isdefective)
+        results_qualite[p[1]] = dict_res_qual
+
         # Pour les tests
         #print("Print diametre pour test : ",trou_qualite_msg.diam)
         #print("press enter")
@@ -105,7 +116,7 @@ def run_qualite(plaque_pos, nom_plaque, step_folder, dist =  0.18, diametres = [
 
     pub_state(pub, "Conformite terminee.")
 
-    return returned_msg
+    return returned_msg, results_qualite
 
 
 def pub_state(pub, msg):

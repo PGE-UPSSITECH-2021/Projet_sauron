@@ -4,6 +4,7 @@ import rospy
 from useful_robot import get_fk, pose_msg_to_homogeneous_matrix
 from run_qualite import run_qualite
 from run_identification import run_identification
+from run_pointage import run_pointage
 from deplacement_robot.msg import Identification, Qualite, Localisation
 from std_msgs.msg import Bool, String
 from deplacement_robot.srv import Robot_set_state, Robot_move_predef
@@ -22,6 +23,7 @@ class Robot:
         self.H = None
         self.image_global = None # TODO
         self.moveit_commander = moveit_commander.roscpp_initialize(sys.argv)
+        self.res_qualite = {}
 
         rospack = rospkg.RosPack()
         self.step_folder = rospack.get_path("deplacement_robot") + "/plaques"
@@ -115,6 +117,9 @@ class Robot:
 
     # Fonction pour lancer la phase de localisation
     def execute_localisation(self, nom_plaque, send_result=True):
+        # Reset des resultat de la qualite
+        self.res_qualite = {}
+
         self.nom_plaque = nom_plaque
 
         #TODO : msg,self.H = run_localisation()
@@ -145,6 +150,9 @@ class Robot:
         if self.nom_plaque != nom_plaque or self.plaque_pos is None:
             self.execute_localisation(nom_plaque, send_result=False)
 
+        # Reset des resultat de la qualite
+        self.res_qualite = {}
+
         msg,_ = run_identification(self.plaque_pos, nom_plaque, self.step_folder, diametres, pub=self.pub_prod_state) #TODO get image global
 
         if send_result:
@@ -154,19 +162,38 @@ class Robot:
         return True
 
     # Fonction pour lancer la phase de qualites
-    def execute_qualite(self, nom_plaque, diametres):
+    def execute_qualite(self, nom_plaque, diametres, send_result=True):
         if self.nom_plaque != nom_plaque or self.plaque_pos is None:
             self.execute_localisation(nom_plaque, send_result=False)
             self.execute_identification(nom_plaque, diametres, send_result=False)
         
-        msg = run_qualite(self.plaque_pos, nom_plaque, self.step_folder, diametres=diametres, pub=self.pub_prod_state)
+        msg,res = run_qualite(self.plaque_pos, nom_plaque, self.step_folder, diametres=diametres, pub=self.pub_prod_state)
 
-        self.pub_result.publish(True)
-        self.spam_result(self.pub_qualite, msg)
+        if send_result:
+            self.pub_result.publish(True)
+            self.spam_result(self.pub_qualite, msg)
+
+        for k in res:
+            self.res_qualite[k] = res[k]
 
         return True
 
+    # Fonction pour lancer la phase de qualites
+    def execute_pointage(self, nom_plaque, diametres):
+        if self.nom_plaque != nom_plaque or self.plaque_pos is None:
+            self.execute_localisation(nom_plaque, send_result=False)
+            self.execute_identification(nom_plaque, diametres, send_result=False)
+            self.execute_qualite(nom_plaque, diametres, send_result=False)
 
+        diam_non_qual = []
+        for d in diametres:
+            if not d in self.res_qualite:
+                diam_non_qual.append(d)
+        if not diam_non_qual == []:
+            self.execute_qualite(nom_plaque, diam_non_qual, send_result=False)
 
+        run_pointage(self.res_qualite, diametres)
 
+        self.pub_result.publish(True)
 
+        return True
