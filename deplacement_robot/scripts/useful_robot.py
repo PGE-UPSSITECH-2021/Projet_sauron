@@ -30,7 +30,7 @@ def homogeneous_matrix_to_pose_msg(mat):
     return pose
 
 def pose_msg_to_homogeneous_matrix(pose):
-    q = Quaternion((pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w))
+    q = Quaternion(pose.orientation.w, pose.orientation.x, pose.orientation.y, pose.orientation.z)
     mat = np.eye(4)
 
     # Extracting the rotation
