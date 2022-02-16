@@ -63,3 +63,62 @@ def fonction_qualite(rayon_attendu,image_raw,debug,showResult = True,fast_algo= 
 
     return not isdefective, defect, image_result
 
+######################################
+
+import numpy as np
+from random import randint
+
+"""
+Parametres :
+    liste_points_px = coordonnees des trous dans l'image (x,y)
+    image = image globale vue du dessus (celle de l"identification)
+    resultats = liste de booleen contenant le resultat de conformite du controle qualite
+
+Objectif : Afficher le resultat de conformite sur l'image globale
+"""
+def run_qualite_image_globale(liste_points_px,image,resultats):
+    rectangle_width_height = 80
+    image = cv2.imread(image)
+    index_result = 0
+    for p in liste_points_px:
+        x = p[0]
+        y = p[1]        
+        if(resultats[index_result]):
+            image = cv2.rectangle(image, (x-rectangle_width_height,y-rectangle_width_height), (x+rectangle_width_height,y+rectangle_width_height),(0,255,0),8) 
+        else:
+            image = cv2.rectangle(image, (x-rectangle_width_height,y-rectangle_width_height), (x+rectangle_width_height,y+rectangle_width_height),(0,0,255),8) 
+
+        index_result +=1 
+
+    cv2.imshow('image',cv2.resize(image, (960, 540)))
+    cv2.waitKey(0)
+
+#### MAIN pour test simulation ####
+if __name__ == "__main__":
+    #simulation creation de coordonnees de points
+    startX = 457
+    startY = 261
+    rectangle_width_heightX = 235
+    rectangle_width_heightY = 330
+    liste_points = []
+    curentX = startX
+    curentY = startY
+
+    #Simulation resultat qualite
+    resultats_qualite = []
+
+    for y in range(5):
+        curentY = startY+y*rectangle_width_heightY
+        for x in range(8):
+            curentX = startX+x*rectangle_width_heightX
+            liste_points.append([curentX,curentY])
+            value = randint(0, 1)
+            resultats_qualite.append(value == 1)
+        curentX = startX
+
+
+        
+    image = "./img.jpg"
+    run_qualite_image_globale(liste_points,image,resultats_qualite)   
+
+
