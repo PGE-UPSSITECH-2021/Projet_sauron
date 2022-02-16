@@ -15,6 +15,7 @@ from communication.msg import Liste_points, Points
 from cv_bridge import CvBridge, CvBridgeError
 from communication.srv import capture
 from communication.srv import identification, identificationResponse
+from communication.srv import localisation
 import numpy as np
 from time import sleep
 
@@ -36,6 +37,7 @@ def check_connexion(func):
             return result
         except ftplib.all_errors:
             variables.pub_ok.publish(False)
+            rospy.loginfo("Error in check connexion")
             cognex_connect()
             return func(*args, **kwargs)
 
@@ -45,6 +47,8 @@ def check_connexion(func):
 # Connect to the camera
 @check_connexion
 def cognex_connect():
+    rospy.loginfo("Connexion to camera")
+
     # Creation of the Telnet connexion
     variables.tn = telnetlib.Telnet(variables.ip, port=23, timeout=10)
     # We enter the username
@@ -71,7 +75,7 @@ def read_cognex(case):
     # Send the command with Telnet
     variables.tn.write(case+"\r\n")
     # Wait for the return code
-    errorCode = str(variables.tn.read_until("1\r\n", timeout=3))
+    errorCode = str(variables.tn.read_until("1\r\n", timeout=5))
     # Read of the returned value if the command did not fail
     val = variables.tn.expect(["\r\n"], timeout=3)[2]
     val = val[:len(val)-2]
@@ -124,6 +128,33 @@ def get_image():
 ##############################################
 ##########       ROS EXCHANGES       #########
 ##############################################
+
+def add_legend(img1):
+	img2 = np.zeros((200,img1.shape[1],3), np.uint8)
+	weight = img1.shape[1]
+	average_types = [10, 16, 28, 45]
+
+	#petit cercle
+	cv.circle(img2, (45,45), average_types[0], variables.colors[0], 4)
+	cv.circle(img2, (45,45), 2, (0,0,255), 6)
+	cv.putText(img2, ": 5mm", (95, 75), cv.FONT_HERSHEY_SIMPLEX, 3, (255, 100, 0), 3, cv.LINE_AA)
+	#moyen petit cercle
+	cv.circle(img2, (45,135), average_types[1], variables.colors[1], 4)
+	cv.circle(img2, (45,135), 2, (0,0,255), 6)
+	cv.putText(img2, ": 7mm", (95, 165), cv.FONT_HERSHEY_SIMPLEX, 3, (255, 100, 0), 3, cv.LINE_AA)
+	#moyen grand cercle
+	cv.circle(img2, (weight/2 +45, 45), average_types[2], variables.colors[2], 4)
+	cv.circle(img2, (weight/2 +45, 45), 2, (0,0,255), 6)
+	cv.putText(img2, ": 12mm", (weight/2 +95, 75), cv.FONT_HERSHEY_SIMPLEX, 3, (255, 100, 0), 3, cv.LINE_AA)
+	#grand cercle
+	cv.circle(img2, (weight/2 +45, 135), average_types[3], variables.colors[3], 4)
+	cv.circle(img2, (weight/2 +45, 135), 2, (0,0,255), 6)
+	cv.putText(img2, ": 18mm", (weight/2 +95, 165), cv.FONT_HERSHEY_SIMPLEX, 3, (255, 100, 0), 3, cv.LINE_AA)
+
+	imv = np.concatenate((img1, img2), axis=0)
+
+	return imv
+
 def detection(msg):
     # Get image from the camera
     img = get_image()
@@ -212,6 +243,7 @@ def identify(msg):
     except CvBridgeError as e:
         print(e)
 
+    variables.annotee = add_legend(variables.annotee)
 
     res = identificationResponse()
     res.points.points = variables.points
@@ -222,13 +254,16 @@ def identify(msg):
 
 
 
-def localisation(type, modele, photo, Mom, Moc, Mint, dist):
+def locate(msg):
     # tole cintree, tole plate, tole epaisse  
     res = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    Moc = np.reshape(msg.Moc, (3,3))
+    Mom = np.reshape(msg.Mom, (3,3))
+    Mint = np.reshape(msg.Mint, (3,3))
 
     get_image()
     try:
-        if(type == "tole plate"):
+        if(msg.type == "tole plate"):
             angle = float(read_cognex("GVE160"))
             u = float(read_cognex("GVC160"))
             v = float(read_cognex("GVD160"))
@@ -408,6 +443,7 @@ cognex_connect()
 # Initialize the services
 s1 = rospy.Service("camera/capture", capture, detection)
 s2 = rospy.Service("camera/identification", identification, identify)
+s3 = rospy.Service("camera/localisation", localisation, locate)
 
 # Create panel with sliders if render in True
 if variables.render:

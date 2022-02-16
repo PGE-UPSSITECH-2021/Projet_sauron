@@ -30,6 +30,7 @@ add_service_files(
    FILES
    identification.srv
    capture.srv
+   localisation.srv
 )
 
 
