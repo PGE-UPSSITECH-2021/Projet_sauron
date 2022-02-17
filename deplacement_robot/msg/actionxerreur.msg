@@ -1,0 +1,2 @@
+bool actionOK
+string erreur
