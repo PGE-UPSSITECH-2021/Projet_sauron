@@ -2,6 +2,7 @@
 # coding: utf-8
 
 import numpy as np
+from numpy import append
 import rospy
 import rospkg
 from deplacement_robot.srv import Robot_move_predef, Move_predef
@@ -22,12 +23,14 @@ def pub_state(pub, msg):
         pub.publish(msg)
 
 def localiser(type_plaque,model_path,image,M_hom_3D,M_pass_oc,M_intr,coeff_distr):
+    print("REEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE")
     try:
         trans,rot,matrice_extr,bryant = main_loc(type_plaque,model_path,image,M_hom_3D,M_pass_oc,M_intr,coeff_distr)
         #trans,rot,matrice_extr,bryant = localisation(type_plaque,model_path,image,M_hom_3D,M_pass_oc,M_intr,coeff_distr)
         return trans,rot,matrice_extr,bryant
     except(UntrustworthyLocalisationError,MatchingError),e:
         return str(e)
+        
 
 def move_to_point(p,pub=None):
     pub_state(pub,"moving to point "+str(p))
@@ -49,6 +52,7 @@ def send_results(pts):
 
 def get_image():
     #capturer l'image
+    pass
     bridge=CvBridge()
     capture_image = rospy.ServiceProxy("camera/capture", capture)
     img = capture_image()
@@ -60,7 +64,53 @@ def get_image():
 
 
 
-def run_localisation(path,pub=None):
+def run_localisation(path,distortion_coefs,intrinsic_mat,M_pass_oc,pub=None):
+    move_parking = rospy.ServiceProxy('move_robot_parking', Robot_move_predef)
+    localisation_success = False
+    for i in range(4):
+        move_to_point(i+1)
+        #capturer l'image
+        img = get_image()
+        pose_get_fk = get_fk()
+        Mtrix_hom_3D = pose_msg_to_homogeneous_matrix(pose_get_fk)
+        try:
+            res = localiser(type_plaque="Tole plate",model_path=path,image=img,M_hom_3D=Mtrix_hom_3D,M_pass_oc=M_pass_oc,M_intr=intrinsic_mat,coeff_distr=distortion_coefs)
+            if not res is None:
+                    trans, rot, extrinseque, bryant = res
+                    print(extrinseque)
+                    print(bryant)
+                    pub_state(pub,"Plaque localisee avec sucess")
+                    move_parking()
+                    pub_state(pub,"Retour en position Parking")
+                    localisation_success = True
+                    for e in rot:
+                        trans.append(e)
+                    send_results(trans)
+                    return extrinseque, localisation_success
+                    
+                
+        except (TypeError,ValueError) , e:
+            pub_state(pub,"plaque non trouvee")
+            print(e)
+        except MatchingError as e:
+            pub_state(pub,"Erreur de matching")
+
+        except UntrustworthyLocalisationError as e:
+            pub_state(pub,"L'erreur de localisation est trop grande")
+        
+        except Exception as e:
+            pub_state(pub,"Autre erreurs")
+            print(type(e))
+
+        #return msg_ros, extrinsinc matrix, bool : False après 4 essasi sinon true
+
+  
+
+if __name__ == "__main__":
+    rospy.init_node('test_localisation', anonymous=True)
+    rospack = rospkg.RosPack()
+    path = rospack.get_path("deplacement_robot")+"/plaques/Tole plate.stp"
+
     distortion_coefs = np.array([   1.55284357e-01,
                                     -3.07067931e+00,  
                                     5.16274059e-03, 
@@ -71,50 +121,12 @@ def run_localisation(path,pub=None):
                                 [0.00000000e+00, 4.77222528e+03, 1.14533714e+03],
                                 [0.00000000e+00, 0.00000000e+00, 1.00000000e+00]])
     
-    M_pass_oc = np.array([                [ 0.,  -1.,  0., 0.],
-                                          [-1.,  0.,  0., 0.],
-                                          [ 0.,  0.,  -1., 0.],
+    M_pass_oc = np.array([                [ 0.,  -1.,  0., -0.035],
+                                          [1.,  0.,  0., -0.035],
+                                          [ 0.,  0.,  1., 0.05],
                                           [ 0.,   0.,  0.,1.]])
-    move_parking = rospy.ServiceProxy('move_robot_parking', Robot_move_predef)
-    for i in range(4):
-        move_to_point(i+1)
-        #capturer l'image
-        img = get_image()
-        pose_get_fk = get_fk()
-        Mtrix_hom_3D = pose_msg_to_homogeneous_matrix(pose_get_fk)
-        try:
-            res = localiser(type_plaque="Tole plate",model_path=path,image=img,M_hom_3D=Mtrix_hom_3D,M_pass_oc=M_pass_oc,M_intr=intrinsic_mat,coeff_distr=distortion_coefs)
-	   
-	    if not res is None:
-                trans, rot, extrinseque, bryant = res
-                print(extrinseque)
-                print(bryant)
-                pub_state(pub,"plaque localisée avec sucess")
-                move_parking()
-                pub_state(pub,"moving back to parking")
-                #send_results([trans,rot])
-                break
-        except (TypeError,ValueError) , e:
-            pub_state(pub,"plaque non trouvée")
-	        print(e)
-
-	    except MatchingError as e:
-            pub_state(pub,"Erreur de matching")
-
-        except UntrustworthyLocalisationError as e:
-	        pub_state(pub,"L'erreur de localisation est trop grande")
-	
-	    except Exception as e:
-            pub_state(pub,"Autre erreurs")
-	        print(type(e))
-
-  
 
 
-if __name__ == "__main__":
-    rospy.init_node('test_localisation', anonymous=True)
-    rospack = rospkg.RosPack()
-    path = rospack.get_path("deplacement_robot")+"/plaques/Tole plate.stp"
-    run_localisation(path)
+    run_localisation(path,distortion_coefs,intrinsic_mat,M_pass_oc)
 
 
