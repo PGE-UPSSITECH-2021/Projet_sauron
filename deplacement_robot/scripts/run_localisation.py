@@ -71,7 +71,10 @@ def run_localisation(path,pub=None):
                                 [0.00000000e+00, 4.77222528e+03, 1.14533714e+03],
                                 [0.00000000e+00, 0.00000000e+00, 1.00000000e+00]])
     
-    M_pass_oc = np.eye(4)
+    M_pass_oc = np.array([                [ 0.,  1.,  0., 0.],
+                                          [-1.,  0.,  0., 0.],
+                                          [ 0.,  0.,  1., 0.]
+                                          [ 0.,   0.,  0.,1.]])
     move_parking = rospy.ServiceProxy('move_robot_parking', Robot_move_predef)
     for i in range(4):
         move_to_point(i+1)

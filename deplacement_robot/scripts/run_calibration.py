@@ -7,19 +7,23 @@ import cv2 as cv
 from calib_finale import calibration
 
 
-def run_calibration():
+def run_calibration(pub=None):
     save_images()
     try:
         matrix_intr, distortion, r_vecs, t_vecs=calibration("../images_calib/")
         return matrix_intr, distortion, r_vecs, t_vecs
     except TypeError:
-        print("CALIBRATION FAILED")
+        pub_state(pub,"CALIBRATION FAILED")
     
+def pub_state(pub, msg):
+    if not pub is None:
+        pub.publish(msg)
 
-def move_to_point(p):
+def move_to_point(p,pub=None):
     move_robot = rospy.ServiceProxy("move_predef",Move_predef)
+    pub_state(pub,"moving to point "+str(p))
     move_robot("calibration_"+str(p))
-    print("moving to point"+str(p))
+    
 
 def get_image():
     #capturer l'image
@@ -28,7 +32,7 @@ def get_image():
     img = capture_image()
     rosimage = img.image
     cv_image = bridge.imgmsg_to_cv2(rosimage,'bgr8')
-    print("shape = ",cv_image.shape)
+    #print("shape = ",cv_image.shape)
     assert (len(cv_image.shape) == 3),"(1) probleme dimensions, image BGR ?"
     return cv_image
 

@@ -100,10 +100,11 @@ def main_localisation(  type_plaque,
     
     # Rc * Mco --> Ro * Mom --> Rm 
     matrice_extrinseque[:3, 3] = matrice_extrinseque[:3, 3]/1000.
-    assert matrice_extrinseque.shape==(4,4)
+    #assert matrice_extrinseque.shape==(4,4)
 
     extrinseque_monde = np.dot(matrice_homogene_3D_outils,matrice_extrinseque)
-    print("extrinseque_pnp :\n{}\nmonde-outil :\n{}".format(matrice_extrinseque,matrice_homogene_3D_outils))
+    extrinseque_monde = np.dot(matrice_extrinseque, matrice_passage_outils_cam)
+    #print("extrinseque_pnp :\n{}\nmonde-outil :\n{}".format(matrice_extrinseque,matrice_homogene_3D_outils))
     
 
     # Calcul des angles de Brillant    
