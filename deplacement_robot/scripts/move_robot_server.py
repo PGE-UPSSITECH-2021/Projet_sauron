@@ -11,6 +11,7 @@ from geometry_msgs.msg import PoseStamped
 from sensor_msgs.msg import JointState
 from moveit_msgs.msg import Constraints, JointConstraint, PositionIKRequest
 from moveit_msgs.srv import GetPositionIK
+from industrial_msgs.msgs import RobotStatus 
 
 #Fichier pour la demo de la release 4
 
@@ -24,11 +25,13 @@ class Move_robot:
         self.speed = 1
         self.state = "LIBRE NON INIT"
         self.etat_loc = "INCONNU"
+        self.robot_enable = False
 
         self.group.set_planner_id("TRRT")
         self.group.set_planning_time(10)
 
         rospy.Subscriber("camera/camera_ok", Bool, self.camera_state_listener)
+        rospy.Subscriber("/robot_status", RobotStatus, self.read_robot_enable)
 
         self.camera_state = "DECONNECTEE" # DECONNECTEE ou EN MARCHE
 
@@ -52,10 +55,19 @@ class Move_robot:
         pub_cam = rospy.Publisher("cam_state", String, queue_size=10)
         pub_etat_loc = rospy.Publisher("plaque_state", String, queue_size=10)
         while not rospy.is_shutdown():
-            publisher.publish(self.state)
+            if self.robot_enable :
+                publisher.publish(self.state)
+            else :
+                publisher.publish("STOPPE")
             pub_cam.publish(self.camera_state)
             pub_etat_loc(self.etat_loc)
             rate.sleep()
+
+    def read_robot_enable(self, msg) :
+        if msg.motion_possible.val == 0 :
+            self.robot_enable = False
+        else :
+            self.robot_enable = True
 
     def camera_state_listener(self, msg) :
         if msg.data :
