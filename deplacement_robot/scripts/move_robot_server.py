@@ -3,7 +3,7 @@
 import sys
 import rospy
 import moveit_commander
-from deplacement_robot.srv import Robot_move, Robot_move_predef, Speed_percentage, Robot_do_square, Robot_set_state, Get_fk, Move_predef
+from deplacement_robot.srv import Robot_move, Robot_move_predef, Speed_percentage, Robot_do_square, Robot_set_state, Get_fk, Move_predef, Set_etat_loc
 import useful_robot
 import copy
 from std_msgs.msg import String, Bool
@@ -23,6 +23,7 @@ class Move_robot:
         self.used = False #TODO
         self.speed = 1
         self.state = "LIBRE NON INIT"
+        self.etat_loc = "INCONNU"
 
         self.group.set_planner_id("TRRT")
         self.group.set_planning_time(10)
@@ -49,9 +50,11 @@ class Move_robot:
         rate = rospy.Rate(10)
         publisher = rospy.Publisher("robot_state", String, queue_size=10)
         pub_cam = rospy.Publisher("cam_state", String, queue_size=10)
+        pub_etat_loc = rospy.Publisher("plaque_state", String, queue_size=10)
         while not rospy.is_shutdown():
             publisher.publish(self.state)
             pub_cam.publish(self.camera_state)
+            pub_etat_loc(self.etat_loc)
             rate.sleep()
 
     def camera_state_listener(self, msg) :
@@ -93,6 +96,9 @@ class Move_robot:
     def handler_set_speed_perentage(self, msg):
         self.set_speed(msg.speed_percentage)
         return []
+
+    def handler_set_etat_loc(self, msg):
+        self.etat_loc = msg.data
 
     def set_speed(self, speed):
         self.speed = speed/100
@@ -154,6 +160,8 @@ class Move_robot:
         s_state = rospy.Service("set_robot_state", Robot_set_state, self.set_state)
 
         s_predef = rospy.Service("move_predef", Move_predef, self.handler_move_predef)
+
+        s_loc = rospy.Service("set_etat_loc", Set_etat_loc, self.handler_set_etat_loc)
 
         rospy.loginfo("Robot ready to move !")
         

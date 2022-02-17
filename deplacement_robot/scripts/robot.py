@@ -8,7 +8,7 @@ from run_pointage import run_pointage
 from run_localisation import run_localisation
 from deplacement_robot.msg import Identification, Qualite, Localisation, Result
 from std_msgs.msg import Bool, String
-from deplacement_robot.srv import Robot_set_state, Robot_move_predef
+from deplacement_robot.srv import Robot_set_state, Robot_move_predef, Set_etat_loc
 import moveit_commander
 import sys
 import time
@@ -143,11 +143,15 @@ class Robot:
 
         time.sleep(1)'''
 
+        srv_etat_loc = rospy.ServiceProxy("set_etat_loc", Set_etat_loc)
+
         if not succes :
             self.pub_result.publish(False,"Plaque non localisée")
+            srv_etat_loc("NOK")
             return False
 
         self.H = H
+        srv_etat_loc("OK")
 
         if send_result:
             self.pub_result.publish(True,"")

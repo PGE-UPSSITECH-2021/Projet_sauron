@@ -17,6 +17,7 @@ add_service_files(
   Robot_set_state.srv
   Get_fk.srv
   Move_predef.srv
+  Set_etat_loc.srv
 )
 
 add_message_files(
