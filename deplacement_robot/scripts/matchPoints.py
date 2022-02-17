@@ -172,12 +172,12 @@ def findMarkPosition(image, debug = False):
     params.minThreshold = 0
     params.maxThreshold = 10
     params.filterByArea = True
-    params.minArea = 20
+    params.minArea = 200
     params.maxArea = 500000
 
     params.filterByCircularity = True
     params.minCircularity = 0.4
-    params.maxCircularity = 0.9
+    params.maxCircularity = 0.90
 
     params.filterByConvexity = False
     params.minConvexity = 0.87
@@ -219,7 +219,7 @@ def getHoughLines(image):
     
 
     imgEdges = cv.Canny(src, 50, 200, None, 3)
-    lines = cv.HoughLinesP(imgEdges, 1, np.pi / 180, 50, 2, 400, 200)
+    lines = cv.HoughLinesP(imgEdges, 1, np.pi / 180, 50, 2, 200, 200)
     #Enlever une dimension inutile de HoughLinesP pour faciliter l'utilisation de lines
     (x,y,z) = lines.shape
     lines = np.resize(lines, (x,z))

@@ -5,7 +5,8 @@ from matUtils import transform_point_with_matrix, perspective_projection
 
 def process_pnp(object_points, image_points, matrice_intrinseque, dist_coefs):
 
-    rotation_guess = np.array([-3.1, 0., 0.])
+    rotation_guess = np.array([-3.14, 0., 0.])
+    #rotation_guess,_ = cv2.Rodrigues(np.array([[-1.,0.,0.],[0.,-1.,0.],[0.,0.,1.]]))
     translation_guess = np.array([0., 0., 1000.])
 
     success, rotation_vector, translation_vector, inliers = cv2.solvePnPRansac(

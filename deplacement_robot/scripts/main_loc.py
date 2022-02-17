@@ -102,8 +102,10 @@ def main_localisation(  type_plaque,
     matrice_extrinseque[:3, 3] = matrice_extrinseque[:3, 3]/1000.
     #assert matrice_extrinseque.shape==(4,4)
 
-    extrinseque_monde = np.dot(matrice_homogene_3D_outils,matrice_extrinseque)
-    extrinseque_monde[:3, :3] = np.dot(matrice_extrinseque[:3, :3], matrice_passage_outils_cam[:3, :3])
+    #extrinseque_monde = np.dot(matrice_homogene_3D_outils,matrice_extrinseque)
+    #extrinseque_monde = np.dot(matrice_extrinseque, matrice_passage_outils_cam)
+    extrinseque_monde = np.dot(matrice_homogene_3D_outils,matrice_passage_outils_cam)
+    extrinseque_monde = np.dot(extrinseque_monde, matrice_extrinseque)
     #print("extrinseque_pnp :\n{}\nmonde-outil :\n{}".format(matrice_extrinseque,matrice_homogene_3D_outils))
     
 
@@ -114,7 +116,6 @@ def main_localisation(  type_plaque,
     except Exception as e:
         print(e)
 
-    # A FAIRE
     print(erreur)
     return translation_vector, rotation_vector, extrinseque_monde, bryant
     
