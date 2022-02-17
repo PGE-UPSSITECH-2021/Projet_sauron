@@ -103,7 +103,7 @@ def main_localisation(  type_plaque,
     #assert matrice_extrinseque.shape==(4,4)
 
     extrinseque_monde = np.dot(matrice_homogene_3D_outils,matrice_extrinseque)
-    extrinseque_monde = np.dot(matrice_extrinseque, matrice_passage_outils_cam)
+    extrinseque_monde[:3, :3] = np.dot(matrice_extrinseque[:3, :3], matrice_passage_outils_cam[:3, :3])
     #print("extrinseque_pnp :\n{}\nmonde-outil :\n{}".format(matrice_extrinseque,matrice_homogene_3D_outils))
     
 
