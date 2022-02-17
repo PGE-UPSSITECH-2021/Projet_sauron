@@ -94,7 +94,7 @@ def run_qualite(plaque_pos, nom_plaque, step_folder, dist =  0.18, diametres = [
         trous.append(trou_qualite_msg)
 
         dict_res_qual = results_qualite.get(p[1]*2,{})
-        dict_res_qual[p[2]] = (p[0],isdefective)
+        dict_res_qual[tuple(p[2])] = (p[0],isdefective)
         results_qualite[p[1]*2] = dict_res_qual
 
         # Pour les tests
