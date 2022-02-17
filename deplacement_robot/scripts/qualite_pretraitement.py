@@ -1,8 +1,16 @@
 import os
+from tkinter import image_types
 import cv2
 import numpy as np
 
 class filtrage:
+	
+	def get_circularite(contour):
+		aire = cv2.contourArea(contour)
+		perimetre = cv2.arcLength(contour,True)
+		return ( 4*np.pi*aire ) / (perimetre**2)
+	
+	
 	@staticmethod
 	def preprocess(image_raw,fast_algo):
 		
@@ -26,55 +34,39 @@ class filtrage:
 		if(len(contours) != 1) :
 			print("multiple shapes detected, croping")
 			print("detected ",len(contours) )
-			#finding centered contour
-			imgW,imgH = image_filtered.shape
-			centerImg = np.array([imgW/2,imgH/2])
 
-			closest_contour = contours[0]
-			(x,y,w,h) = cv2.boundingRect(closest_contour)
-			centerM = np.array( [ int(x+(w/2)), int(y+(h/2)) ] )
-			closest_dist = np.linalg.norm(centerImg-centerM)
+			#finding contour that look like a cricle
+			most_circular = contours[0]
+			best_cirularity = filtrage.get_circularite(most_circular)
+			for c in contours[1:]:
+				circularite = filtrage.get_circularite(most_circular)
+				if(circularite>best_cirularity):
+					best_cirularity = circularite
+					most_circular = c
 
-			closest_x = x
-			closest_y = y
-			closest_w = w
-			closest_h = h
-			print("closest_dist=",closest_dist)
-			for c in contours:
-				(x,y,w,h) = cv2.boundingRect(c)
-				centerM = np.array( [ int(x+(w/2)), int(y+(h/2)) ] )
 
-				d = np.linalg.norm(centerImg-centerM)
-				if(d<closest_dist):
-					closest_dist = d
-					closest_contour = c
-					closest_x = x
-					closest_y = y
-					closest_w = w
-					closest_h = h
-
-				#print("closest_dist=",d)
-				#test = cv2.rectangle(image_filtered,(x,y),(x+w,y+h),(0,255,0),3)
-				#cv2.imshow("test", test) 
-				#cv2.waitKey(0)
-			contour = closest_contour
-
+			(x,y,w,h) = cv2.boundingRect(most_circular)
 
 		else:
 			print("ONE SHAPE DETECTED")
 			contour = contours[0]
 			#croping around contour to save process time:
 			(x,y,w,h) = cv2.boundingRect(contour)
-			closest_x = x
-			closest_y = y
-			closest_w = w
-			closest_h = h
+
 
 		border = 100
 		if(fast_algo):
 			border=20
-		image_filtered = image_filtered[closest_y-border:closest_y+closest_h+border,closest_x-border:closest_x+closest_w+border]
-		offset = (closest_x-border,closest_y-border)
+		imH,imW,_ = image_filtered.shape
+		while(not (y-border > 0 and y+h+border< imH and x-border>0 and x+w+border<imW) ):
+			print("image border too big, trying")
+			border = border - 1
 
+		image_filtered = image_filtered[y-border:y+h+border,x-border:x+y+border]
+		offset = (x-border,y-border)
+
+
+
+		assert image_filtered is not None, "empty image"
 		return cv2.bitwise_not(image_filtered),offset,False
 
