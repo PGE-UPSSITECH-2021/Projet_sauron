@@ -17,15 +17,15 @@ from tsp_solver.greedy import solve_tsp
 
 
 def run_qualite(plaque_pos, nom_plaque, step_folder, dist =  0.18, diametres = [5,7,12,18], pub=None):
-    pub_state(pub, "Debut conformite.")
-    pub_state(pub, "Calcul de la trajectoire.")
+    pub_state(pub, "Debut conformite")
+    pub_state(pub, "Calcul de la trajectoire")
     # Lecture du fichier step et recuperation de tous les trous
     d = get_holes(step_folder + "/" + str(nom_plaque) + ".stp", diametres)
 
     # Determination du chemin en fonction des trous
     points = get_path(plaque_pos, dist, d)
 
-    pub_state(pub, "Trajectoire trouve.")
+    pub_state(pub, "Trajectoire trouvee")
 
     ######## Deplacement du robot ########
 
@@ -169,7 +169,7 @@ def get_path(plaque_pos, dist, d):
         h = np.vstack((h, [0,0,0,1]))
 
         rayon = d[k].rayon
-        pos=d[k].position
+        pos=np.dot(plaque_pos, np.hstack((d[k].position, 1)))[:3]/1000
         msg = homogeneous_matrix_to_pose_msg(h)
 
         points.append((msg, rayon, pos))

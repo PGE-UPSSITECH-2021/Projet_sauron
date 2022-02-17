@@ -29,7 +29,7 @@ class Move_robot:
 
         rospy.Subscriber("camera/camera_ok", Bool, self.camera_state_listener)
 
-        self.camera_state = "ETEINTE" # ETEINTE ou EN MARCHE
+        self.camera_state = "DECONNECTEE" # DECONNECTEE ou EN MARCHE
 
         #Limitation de la vitesse    
         args = sys.argv[1:]
@@ -58,7 +58,7 @@ class Move_robot:
         if msg.data :
             self.camera_state = "EN MARCHE"
         else :
-            self.camera_state = "ETEINTE"
+            self.camera_state = "DECONNECTEE"
 
     def handler_robot_move(self, msg):
         pose_goal = msg.Pose

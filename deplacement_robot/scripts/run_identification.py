@@ -58,7 +58,7 @@ def run_identification(plaque_pos, nom_plaque, step_folder, diametres, intrinsec
             exit()
         pub_state(pub, "Deplacement a la position " + str(i+1) + "/" + str(nbPose))
         move_parking()
-        res_move = move_robot(pose(0))
+        res_move = move_robot(pose[0])
 
         if not res_move.res :
             pub_state(pub, "Position inatteignable. Passage au position suivante")
@@ -75,10 +75,10 @@ def run_identification(plaque_pos, nom_plaque, step_folder, diametres, intrinsec
 
         points_im = []
         for p in res_identification.points.points:
-            point_im.append((p.x, p.y))
+            points_im.append((p.x, p.y))
 
         pos_cam = pose_msg_to_homogeneous_matrix(get_fk())
-        point2D = projection_3D_2D(pose(1), pos_cam, intrinsec, points_im, decalage*i)
+        point2D = projection_3D_2D(pose[1], pos_cam, intrinsec, points_im, decalage*i)
 
         img = res_image_annotee[-1]
 
@@ -145,16 +145,18 @@ def get_closer(pos2D, Liste2D, decY):
     x = pos2D[0]
     y = pos2D[1]
 
-    res = [x, y, np.Inf]
+    res = [int(x), int(y), np.Inf]
     for u, v in Liste2D:
-        if(res[2] > np.sqrt((x-u)^2 + (y-v-decY)^2) and (x-u) < 150 and (y-v-decY) < 150):
-            res = [u, v, np.sqrt((x-u)^2 + (y-v-decY)^2)]
+        if(res[2] > np.sqrt((x-u)**2 + (y-v-decY)**2) and (x-u) < 150 and (y-v-decY) < 150):
+            res = [int(u), int(v), np.sqrt((x-u)**2 + (y-v-decY)**2)]
     
     return res[:2]
 
 
 def projection_3D_2D(Liste3D, Mcm, Mint, Liste2D, decY):
     #Mcm = np.linalg.inv(Mmc)
+    Mint[0,0] = Mint[0,0]/1000
+    Mint[1,1] = Mint[1,1]/1000
     pos2D = []
     for x, y, z in Liste3D:
         proj = get_points_projection(Mint, Mcm, [x,y,z])
