@@ -5,12 +5,14 @@ from useful_robot import get_fk, pose_msg_to_homogeneous_matrix
 from run_qualite import run_qualite
 from run_identification import run_identification
 from run_pointage import run_pointage
-from deplacement_robot.msg import Identification, Qualite, Localisation
+from run_localisation import run_localisation
+from deplacement_robot.msg import Identification, Qualite, Localisation, Result
 from std_msgs.msg import Bool, String
 from deplacement_robot.srv import Robot_set_state, Robot_move_predef
 import moveit_commander
 import sys
 import time
+import numpy as np
 
 import numpy as np
 
@@ -20,6 +22,10 @@ class Robot:
         self.nom_plaque = None
         self.intrinsic = None
         self.distorsion = None
+        self.outil_cam = np.array([ [0, -1, 0, -0.035],
+                                    [1,  0, 0, -0.035],
+                                    [0,  0, 1,  0.05],
+                                    [0,  0, 0,  1]])
         self.H = None
         self.image_global = None # TODO
         self.moveit_commander = moveit_commander.roscpp_initialize(sys.argv)
@@ -28,7 +34,7 @@ class Robot:
         rospack = rospkg.RosPack()
         self.step_folder = rospack.get_path("deplacement_robot") + "/plaques"
 
-        self.pub_result = rospy.Publisher("result", Bool, queue_size=10)
+        self.pub_result = rospy.Publisher("result", Result, queue_size=10)
         self.pub_identification = rospy.Publisher("result/identification", Identification, queue_size=10)
         self.pub_qualite = rospy.Publisher("result/qualite", Qualite, queue_size=10)
         self.pub_localisation = rospy.Publisher("result/localisation", Localisation, queue_size=10)
@@ -122,8 +128,8 @@ class Robot:
 
         self.nom_plaque = nom_plaque
 
-        #TODO : msg,self.H = run_localisation()
-        msg = Localisation()
+        msg,H,succes = run_localisation(self.step_folder + "/" + nom_plaque + ".stp", self.distorsion, self.intrinsic, self.outil_cam, pub=self.pub_prod_state)
+        '''msg = Localisation()
         msg.x = float(0.55)
         msg.y = float(0.24)
         msg.z = float(0.005)
@@ -135,10 +141,16 @@ class Robot:
                                     [0,0,1,0.005],
                                     [0,0,0,1]])
 
-        time.sleep(1)
+        time.sleep(1)'''
+
+        if not succes :
+            self.pub_result.publish(False,"Plaque non localisée")
+            return False
+
+        self.H = H
 
         if send_result:
-            self.pub_result.publish(True)
+            self.pub_result.publish(True,"")
             self.spam_result(self.pub_localisation, msg)
 
         return True
@@ -148,7 +160,9 @@ class Robot:
         if self.intrinsic is None or self.distorsion is None:
             self.execute_initialisation(send_result=False)
         if self.nom_plaque != nom_plaque or self.plaque_pos is None:
-            self.execute_localisation(nom_plaque, send_result=False)
+            succes = self.execute_localisation(nom_plaque, send_result=False)
+            if not succes:
+                return False
 
         # Reset des resultat de la qualite
         self.res_qualite = {}
@@ -156,7 +170,7 @@ class Robot:
         msg,_ = run_identification(self.plaque_pos, nom_plaque, self.step_folder, diametres, self.intrinsic, pub=self.pub_prod_state) #TODO get image global
 
         if send_result:
-            self.pub_result.publish(True)
+            self.pub_result.publish(True,"")
             self.spam_result(self.pub_identification, msg)
 
         return True
@@ -164,13 +178,15 @@ class Robot:
     # Fonction pour lancer la phase de qualites
     def execute_qualite(self, nom_plaque, diametres, send_result=True):
         if self.nom_plaque != nom_plaque or self.plaque_pos is None:
-            self.execute_localisation(nom_plaque, send_result=False)
+            succes = self.execute_localisation(nom_plaque, send_result=False)
+            if not succes :
+                return False
             self.execute_identification(nom_plaque, diametres, send_result=False)
         
         msg,res = run_qualite(self.plaque_pos, nom_plaque, self.step_folder, diametres=diametres, pub=self.pub_prod_state)
 
         if send_result:
-            self.pub_result.publish(True)
+            self.pub_result.publish(True,"")
             self.spam_result(self.pub_qualite, msg)
 
         for k in res:
@@ -194,6 +210,6 @@ class Robot:
 
         run_pointage(self.res_qualite, diametres)
 
-        self.pub_result.publish(True)
+        self.pub_result.publish(True,"")
 
         return True
