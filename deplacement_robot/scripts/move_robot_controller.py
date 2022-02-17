@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# coding: utf-8
 
 import rospy
 from deplacement_robot.msg import IHM_msg

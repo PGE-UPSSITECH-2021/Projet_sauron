@@ -11,7 +11,7 @@ from geometry_msgs.msg import PoseStamped
 from sensor_msgs.msg import JointState
 from moveit_msgs.msg import Constraints, JointConstraint, PositionIKRequest
 from moveit_msgs.srv import GetPositionIK
-from industrial_msgs.msgs import RobotStatus 
+from industrial_msgs.msg import RobotStatus
 
 #Fichier pour la demo de la release 4
 
@@ -60,7 +60,7 @@ class Move_robot:
             else :
                 publisher.publish("STOPPE")
             pub_cam.publish(self.camera_state)
-            pub_etat_loc(self.etat_loc)
+            pub_etat_loc.publish(self.etat_loc)
             rate.sleep()
 
     def read_robot_enable(self, msg) :
@@ -111,6 +111,7 @@ class Move_robot:
 
     def handler_set_etat_loc(self, msg):
         self.etat_loc = msg.data
+	return []
 
     def set_speed(self, speed):
         self.speed = speed/100

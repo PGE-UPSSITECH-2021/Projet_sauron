@@ -22,8 +22,7 @@ def pub_state(pub, msg):
     if not pub is None:
         pub.publish(msg)
 
-def localiser(type_plaque,model_path,image,M_hom_3D,M_pass_oc,M_intr,coeff_distr):
-    print("REEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE")
+def localiser(type_plaque,model_path,image,M_hom_3D,M_pass_oc,M_intr,coeff_distr): 
     try:
         trans,rot,matrice_extr,bryant = main_loc(type_plaque,model_path,image,M_hom_3D,M_pass_oc,M_intr,coeff_distr)
         #trans,rot,matrice_extr,bryant = localisation(type_plaque,model_path,image,M_hom_3D,M_pass_oc,M_intr,coeff_distr)
@@ -39,7 +38,7 @@ def move_to_point(p,pub=None):
    
 
 
-def send_results(pts):
+def send_results(pts, img):
     message = Localisation()
     bridge=CvBridge()
     message.x = pts[0]
@@ -48,7 +47,8 @@ def send_results(pts):
     message.a = pts[3]
     message.b = pts[4]
     message.g = pts[5]
-    message.image = bridge.cv2_to_compressed_imgmsg(get_image())
+    message.image = bridge.cv2_to_compressed_imgmsg(img)
+    return message
 
 def get_image():
     #capturer l'image
@@ -67,6 +67,7 @@ def get_image():
 def run_localisation(path,distortion_coefs,intrinsic_mat,M_pass_oc,pub=None):
     move_parking = rospy.ServiceProxy('move_robot_parking', Robot_move_predef)
     localisation_success = False
+    pub_state(pub,"Debut localisation")
     for i in range(4):
         move_to_point(i+1)
         #capturer l'image
@@ -79,18 +80,19 @@ def run_localisation(path,distortion_coefs,intrinsic_mat,M_pass_oc,pub=None):
                     trans, rot, extrinseque, bryant = res
                     print(extrinseque)
                     print(bryant)
-                    pub_state(pub,"Plaque localisee avec sucess")
+                    pub_state(pub,"Plaque localisee avec succes")
+		    pub_state(pub,"Retour en position parking")
                     move_parking()
-                    pub_state(pub,"Retour en position Parking")
                     localisation_success = True
-                    for e in rot:
+		    trans = list(extrinseque[:3,3])
+                    for e in bryant:
                         trans.append(e)
-                    send_results(trans)
-                    return extrinseque, localisation_success
+                    msg = send_results(trans, img)
+                    return msg,extrinseque, localisation_success
                     
                 
         except (TypeError,ValueError) , e:
-            pub_state(pub,"plaque non trouvee")
+            pub_state(pub,"Plaque non trouvee")
             print(e)
         except MatchingError as e:
             pub_state(pub,"Erreur de matching")
@@ -98,9 +100,9 @@ def run_localisation(path,distortion_coefs,intrinsic_mat,M_pass_oc,pub=None):
         except UntrustworthyLocalisationError as e:
             pub_state(pub,"L'erreur de localisation est trop grande")
         
-        except Exception as e:
-            pub_state(pub,"Autre erreurs")
-            print(type(e))
+        '''except Exception as e:
+            pub_state(pub,"Autre erreur")'''
+    return Localisation(), None, False
 
         #return msg_ros, extrinsinc matrix, bool : False après 4 essasi sinon true
 

@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+# coding: utf-8
+
 import rospkg
 import rospy
 from useful_robot import get_fk, pose_msg_to_homogeneous_matrix
@@ -26,7 +28,6 @@ class Robot:
                                     [1,  0, 0, -0.035],
                                     [0,  0, 1,  0.05],
                                     [0,  0, 0,  1]])
-        self.H = None
         self.image_global = None # TODO
         self.moveit_commander = moveit_commander.roscpp_initialize(sys.argv)
         self.res_qualite = {}
@@ -147,11 +148,11 @@ class Robot:
 
         if not succes :
             self.pub_result.publish(False,"Plaque non localisée")
-            srv_etat_loc("NOK")
+            #srv_etat_loc("NOK")
             return False
 
-        self.H = H
-        srv_etat_loc("OK")
+        self.plaque_pos = H
+        #srv_etat_loc("OK")
 
         if send_result:
             self.pub_result.publish(True,"")
@@ -212,7 +213,7 @@ class Robot:
         if not diam_non_qual == []:
             self.execute_qualite(nom_plaque, diam_non_qual, send_result=False)
 
-        run_pointage(self.res_qualite, diametres)
+        run_pointage(self.res_qualite, diametres, pub=self.pub_prod_state)
 
         self.pub_result.publish(True,"")
 

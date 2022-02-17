@@ -45,12 +45,12 @@ def run_pointage(dict_points, diametres, pub=None):
             pub_state(pub, "Position inatteignable. Passage au position suivante")
             rospy.logwarn("Point inatteignable. Passage au point suivant.")
 
-    pub_state(pub, "Pointage finie, retour au parking")
+    pub_state(pub, "Pointage fini, retour au parking")
 
     # Retour a la position de parking
     move_parking()
 
-    pub_state(pub, "Pointage terminee.")
+    pub_state(pub, "Pointage termine")
 
 
 
@@ -75,11 +75,17 @@ def find_path(dict_points, diametres):
     dist_keys = get_distance(keys)
     order = solve_tsp(dist_keys)
 
+    print(dist_keys)
+
     res = []
 
     # Tri des position dans l ordre optimal
     for o in order:
-        res.append(selected_pose[keys[0]])
+        res.append(selected_pose[keys[o]])
+
+    print(res)
+
+    return res 
 
 
 # Fonction pour passer d une liste de vecteur a une matrice de distance

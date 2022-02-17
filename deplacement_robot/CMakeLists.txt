@@ -28,6 +28,7 @@ add_message_files(
   Trou_identification.msg
   Trou_qualite.msg
   Localisation.msg
+  Result.msg
 )
 
 generate_messages(

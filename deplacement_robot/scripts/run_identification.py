@@ -82,12 +82,12 @@ def run_identification(plaque_pos, nom_plaque, step_folder, diametres, intrinsec
 
         img = res_image_annotee[-1]
 
-        for p in point2D:
+        '''for p in point2D:
             cv.circle(img, (p[0],p[1]), 2, (0,0,255), 6)
 
         plt.imshow(img)
         plt.draw()
-        plt.pause(0.001)
+        plt.pause(0.001)'''
     
     pub_state(pub, "Identification finie, retour position parking")
 
@@ -125,7 +125,7 @@ def run_identification(plaque_pos, nom_plaque, step_folder, diametres, intrinsec
     plt.pause(0.001)
     '''print("press enter")
     raw_input()'''
-    pub_state(pub, "Identification terminee.")
+    pub_state(pub, "Identification terminee")
 
     return msg, (image_originale, trous)
 
