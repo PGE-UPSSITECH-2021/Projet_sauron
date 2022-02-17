@@ -31,15 +31,16 @@ variables = Variables()
 # In case of failure, sends to camera/camera_ok False
 def check_connexion(func):
     def wrap(*args, **kwargs):
-        try:
-            result = func(*args, **kwargs)
-            variables.pub_ok.publish(True)
-            return result
-        except ftplib.all_errors:
-            variables.pub_ok.publish(False)
-            rospy.loginfo("Error in check connexion")
-            cognex_connect()
-            return func(*args, **kwargs)
+        done = False
+        while(not done):
+            try:
+                result = func(*args, **kwargs)
+                variables.pub_ok.publish(True)
+                done = True
+            except ftplib.all_errors:
+                variables.pub_ok.publish(False)
+                rospy.loginfo("Error in check connexion\n")
+        return result
 
     return wrap
 
@@ -47,7 +48,7 @@ def check_connexion(func):
 # Connect to the camera
 @check_connexion
 def cognex_connect():
-    rospy.loginfo("Connexion to camera")
+    rospy.loginfo("Connexion to camera\n")
 
     # Creation of the Telnet connexion
     variables.tn = telnetlib.Telnet(variables.ip, port=23, timeout=10)
@@ -60,10 +61,10 @@ def cognex_connect():
     variables.tn.read_until("User Logged In\r\n", timeout=3)
     
     variables.tn.write("Put Live 1\r\n")
-    rospy.loginfo("Com OK: "+str(variables.tn.expect(["0\r\n", "1\r\n"], timeout=3)[2]))
+    rospy.loginfo("Put Live 1 -- Com OK: "+str(variables.tn.expect(["0\r\n", "1\r\n"], timeout=3)[2]))
     # We put online the system to be able to trigger the acquisition
     variables.tn.write("SO1\r\n")
-    rospy.loginfo("Com OK: "+str(variables.tn.expect(["0\r\n", "1\r\n"], timeout=3)[2]))
+    rospy.loginfo("SO1 -- Com OK: "+str(variables.tn.expect(["0\r\n", "1\r\n"], timeout=3)[2]))
 
     # Update of default gain value
     variables.gain = int(float(read_cognex("GVG003")))
@@ -71,18 +72,19 @@ def cognex_connect():
 
 # Read a value from the camera
 @check_connexion
-def read_cognex(case):
+def read_cognex(case, verbose=1):
     # Send the command with Telnet
     variables.tn.write(case+"\r\n")
     # Wait for the return code
-    errorCode = str(variables.tn.read_until("1\r\n", timeout=5))
+    errorCode = str(variables.tn.read_until("1\r\n", timeout=6))
     # Read of the returned value if the command did not fail
-    val = variables.tn.expect(["\r\n"], timeout=3)[2]
+    val = variables.tn.expect(["\r\n"], timeout=6)[2]
     val = val[:len(val)-2]
-    if(val == ""):
+    if(val == "" or not "1\r\n" in errorCode):
         raise EOFError('No answer from camera')
-    # Log info to see what is happening
-    rospy.loginfo("Com : "+case+" -- "+"Com OK: "+errorCode[0]+" -- "+"Com Val : "+val+"\r\n")
+    if(verbose == 1):
+        # Log info to see what is happening
+        rospy.loginfo("Com : "+case+" -- "+"Com OK: "+errorCode[0]+" -- "+"Com Val : "+val+"\r\n")
     return val
 
 
@@ -92,12 +94,14 @@ def write_cognex(case, val):
     # Send the command and associated value with Telnet
     variables.tn.write(case+str(val)+"\r\n")
     # Log info to see what is happening
-    rospy.loginfo("Com : "+case+" -- "+"Com OK: "+str(variables.tn.expect(["0\r\n", "1\r\n"], timeout=3)[2]))
+    rospy.loginfo("Com : "+case+" -- "+"Com OK: "+str(variables.tn.expect(["0\r\n", "1\r\n"], timeout=6)[2]))
 
 
 # Get image from the camera
 @check_connexion
 def get_image():
+    variables.spam = False
+
     if(variables.identification and not variables.opencv):
         # Send an event for holes detection and wait for it
         variables.tn.write("SW0\r\n")
@@ -105,8 +109,11 @@ def get_image():
         rospy.loginfo("Com : SW0 -- Com OK: "+str(variables.tn.expect(["0\r\n", "1\r\n"], timeout=6)[2]))
     # Send an acquisition event and wait for it
     variables.tn.write("SW8\r\n")
+    errorCode = str(variables.tn.expect(["0\r\n", "1\r\n"], timeout=6)[2])
+    if(not "1\r\n" in errorCode):
+        raise EOFError('No answer from camera')
     # Log info to see what is happening
-    rospy.loginfo("Com : SW8 -- Com OK: "+str(variables.tn.expect(["0\r\n", "1\r\n"], timeout=6)[2]))
+    rospy.loginfo("Com : SW8 -- Com OK: "+errorCode)
 
     # Creation of the FTP connexion
     variables.ftp = FTP(variables.ip)
@@ -118,6 +125,8 @@ def get_image():
     variables.ftp.retrbinary("RETR " + filename, lf.write)
     lf.close()
     img = cv.imread(filename)
+
+    variables.spam = True
 
     return img
 
@@ -236,14 +245,10 @@ def identify(msg):
     # Try using the OpenCV bridge to convert image to the right format
     try:
         bridge = CvBridge()
-        if(msg.plaque == "Courbee"):
-            variables.annotee = bridge.cv2_to_imgmsg(img, "bgr8")
-        else:
-            variables.annotee = bridge.cv2_to_imgmsg(img, "bgr8")
+        img = add_legend(img)
+        variables.annotee = bridge.cv2_to_imgmsg(img, "bgr8")
     except CvBridgeError as e:
         print(e)
-
-    variables.annotee = add_legend(variables.annotee)
 
     res = identificationResponse()
     res.points.points = variables.points
@@ -466,8 +471,11 @@ prev_frame_time = time.time()
 new_frame_time = 0
 
 while(not rospy.is_shutdown()):
-    read_cognex("GVG003")
     sleep(0.1)
+
+    if(variables.spam):
+        read_cognex("GVG003", verbose=0)
+        
     if variables.render :
         # Get image from the camera
         img = get_image()

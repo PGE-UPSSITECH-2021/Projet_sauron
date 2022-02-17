@@ -28,6 +28,7 @@ class Variables:
 		self.opencv = True
 		self.render = False
 		self.plaque = "Plate" # Plate, Courbee, Lourde, False
+		self.spam = True
 
 		# Circle identification parameters
 		self.blur = 5
