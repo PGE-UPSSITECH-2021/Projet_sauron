@@ -153,8 +153,8 @@ def get_closer(pos2D, Liste2D, decY):
     return res[:2]
 
 
-def projection_3D_2D(Liste3D, Mmc, Mint, Liste2D, decY):
-    Mcm = np.linalg.inv(Mmc)
+def projection_3D_2D(Liste3D, Mcm, Mint, Liste2D, decY):
+    #Mcm = np.linalg.inv(Mmc)
     pos2D = []
     for x, y, z in Liste3D:
         proj = get_points_projection(Mint, Mcm, [x,y,z])
@@ -169,8 +169,10 @@ def get_poses(cylinders_dict, plaque_pos, dist):
     for key in cylinders_dict:
         cylinders = cylinders_dict[key]
         point = []
+        point_m = []
         for c in cylinders :
             point.append(np.array(c.position)/1000)
+            point_m.append(np.dot(plaque_pos, np.hstack((np.array(c.position)/1000, 1)))[:3])
 
         m = np.mean(point, 0)
         m = np.dot(plaque_pos, np.hstack((m, 1)))[:3]
@@ -193,7 +195,7 @@ def get_poses(cylinders_dict, plaque_pos, dist):
         pt = np.vstack((pt, [0,0,0,1]))
         msg = homogeneous_matrix_to_pose_msg(pt)
 
-        poses_d[tuple(p[0])] = (msg, point)
+        poses_d[tuple(p[0])] = (msg, point_m)
         
     keys = poses_d.keys()
     for key in sorted(list(keys)):
