@@ -5,6 +5,7 @@ import numpy as np
 
 
 class filtrage:
+    @staticmethod
     def get_circularite(contour):
         aire = cv2.contourArea(contour)
         perimetre = cv2.arcLength(contour, True)
@@ -99,7 +100,7 @@ class filtrage:
         border = 100
         if fast_algo:
             border = 20
-        imH, imW, _ = image_filtered.shape
+        imH, imW = image_filtered.shape
         while not (
             closestY - border > 0
             and closestY + closestH + border < imH
