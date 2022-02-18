@@ -31,7 +31,7 @@ def fonction_qualite(rayon_attendu,image_raw,debug,showResult = True,fast_algo= 
 
 		if(nohole):
 			resized_image = cv2.resize(image_raw,(520,388))
-			cv2.circle(resized_image,(int(520/2),int(388/2)),50,(255,0,0),5) #dessine cercle
+			cv2.circle(resized_image,(int(520/2),int(388/2)),50,(0,0,255),5) #dessine cercle
 			if(debug or showResult):
 				plt.imshow(resized_image)
 				plt.draw()
@@ -55,7 +55,7 @@ def fonction_qualite(rayon_attendu,image_raw,debug,showResult = True,fast_algo= 
 
 		print("image raw")
 		if(isdefective):
-			image_result = cv2.drawContours(image_raw, contours, -1, (255,0,0), px_size,offset=offset_)
+			image_result = cv2.drawContours(image_raw, contours, -1, (0,0,255), px_size,offset=offset_)
 		else:
 			image_result= cv2.drawContours(image_raw, contours, -1, (0,255,0), px_size,offset=offset_)
 

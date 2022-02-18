@@ -148,11 +148,11 @@ class Robot:
 
         if not succes :
             self.pub_result.publish(False,"Plaque non localisée")
-            #srv_etat_loc("NOK")
+            srv_etat_loc("NOK")
             return False
 
         self.plaque_pos = H
-        #srv_etat_loc("OK")
+        srv_etat_loc("OK")
 
         if send_result:
             self.pub_result.publish(True,"")
