@@ -5,8 +5,24 @@ import time
 from matplotlib import pyplot as plt
 from datetime import datetime
 
-def fonction_qualite(rayon_attendu,image_raw,debug,showResult = True,fast_algo= True):
+def fonction_qualite(rayon_attendu,image_raw,debug,showResult = True,fast_algo= True,image_globale,dic_points_3d_to_2d,curent_3d_point_xyz_tuple):
+	
 	try:
+		key_found = False
+		(x_img_2d,y_img_2d) = None,None
+		if(dic_points_3d_to_2d[curent_2d_point_xyz_tuple]):
+			(x_img_2d,y_img_2d) = dic_points_3d_to_2d[curent_3d_point_xyz_tuple]
+			key_found = True
+		else:
+			print("================================================================")
+			print("==================| QUALITE CRITICAL FAILURE |==================")
+			print("================================================================")
+			print("Key not found in the dictonary")
+			print("Key :",curent_3d_point_xyz_tuple)
+			print("dic_points_3d_to_2d :",dic_points_3d_to_2d)
+			time.sleep(5)
+			
+		
 		#calcul a la main pas fiable.
 		start_time = time.time()
 
@@ -54,15 +70,24 @@ def fonction_qualite(rayon_attendu,image_raw,debug,showResult = True,fast_algo= 
 		assert(contours is not None)
 
 		print("image raw")
+		color_ = (0,255,0)
 		if(isdefective):
-			image_result = cv2.drawContours(image_raw, contours, -1, (0,0,255), px_size,offset=offset_)
-		else:
-			image_result= cv2.drawContours(image_raw, contours, -1, (0,255,0), px_size,offset=offset_)
+			color_ = (0,0,255)
+		
+		image_result = cv2.drawContours(image_raw, contours, -1, color_ , px_size,offset=offset_)
 
 
+			
+		if(key_found):
+			rectangle_width_height = 80
+			image_globale = cv2.rectangle(image_globale, (x_img_2d-rectangle_width_height,y_img_2d-rectangle_width_height), (x_img_2d+rectangle_width_height,y_img_2d+rectangle_width_height),color_,8) 
+
+			
+			
 		if(showResult):
 			print("["+str((time.time() - start_time))+" seconds]")
 			plt.imshow(cv2.resize(image_result,(520,388)))
+			plt.imshow(cv2.resize(image_globale,(520,388)))
 			plt.draw()
 			plt.pause(0.001)
 
