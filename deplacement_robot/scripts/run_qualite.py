@@ -82,7 +82,7 @@ def run_qualite(plaque_pos, nom_plaque, step_folder, image_glob, dic_3D_2D, dist
         print("shape = ",cv_image.shape)
         assert (len(cv_image.shape) == 3),"(1) probleme dimensions, image BGR ?"
 
-        isdefective, defect, image = fonction_qualite(p[1],cv_image,debug=False,fast_algo=True,image_globale=image_global, dic_points_3d_to_2d=dic_3D_2D,curent_3d_point_xyz_tuple=tuple(p[2]))
+        isdefective, defect, image = fonction_qualite(p[1],cv_image,debug=False,fast_algo=True,image_globale=image_global, dic_points_3d_to_2d=dic_3D_2D,curent_3d_point_xyz_tuple=tuple(np.round(p[2],3)))
         isDefective_all.append(isdefective)
 
         image_ros_result = bridge.cv2_to_compressed_imgmsg(image)
@@ -172,10 +172,9 @@ def get_path(plaque_pos, dist, d):
         h = np.vstack((h, [0,0,0,1]))
 
         rayon = d[k].rayon
-        pos=np.dot(plaque_pos, np.hstack((d[k].position, 1)))[:3]/1000
         msg = homogeneous_matrix_to_pose_msg(h)
 
-        points.append((msg, rayon, pos))
+        points.append((msg, rayon, m))
 
     return points
 

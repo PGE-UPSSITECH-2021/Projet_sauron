@@ -5,15 +5,15 @@ import time
 from matplotlib import pyplot as plt
 from datetime import datetime
 
-def fonction_qualite(rayon_attendu,image_raw,debug,showResult = True,fast_algo= True,image_globale,dic_points_3d_to_2d,curent_3d_point_xyz_tuple):
+def fonction_qualite(rayon_attendu,image_raw,debug,image_globale,dic_points_3d_to_2d,curent_3d_point_xyz_tuple,showResult = True,fast_algo= True):
 	
 	try:
 		key_found = False
 		(x_img_2d,y_img_2d) = None,None
-		if(dic_points_3d_to_2d[curent_2d_point_xyz_tuple]):
+		try:
 			(x_img_2d,y_img_2d) = dic_points_3d_to_2d[curent_3d_point_xyz_tuple]
 			key_found = True
-		else:
+		except:
 			print("================================================================")
 			print("==================| QUALITE CRITICAL FAILURE |==================")
 			print("================================================================")

@@ -158,7 +158,7 @@ def appariement(proj, P_3D, err, decY, point_3D_2D):
     for i,p in enumerate(proj):
         p[:1] += decY
         p = np.array(p) - err
-        point_3D_2D[tuple(P_3D[i])] = (int(p[0]), int(p[1]))
+        point_3D_2D[tuple(np.round(P_3D[i]/1000, 3))] = (int(p[0]), int(p[1]))
 
     return point_3D_2D
 
@@ -172,9 +172,11 @@ def projection_3D_2D(Liste3D, pos_monde_outil, pos_outil_cam, pos_plaque, intrin
     extrinsic = np.linalg.inv(pos_monde_cam)    
 
     points_3D = []
+    P_mondes = []
     for p in Liste3D:
         P_plaque = np.hstack((p, 1))
         P_monde = np.dot(pos_monde_plaque, P_plaque)
+	P_mondes.append(P_monde[:3])
         points_3D.append(P_monde[:3])
 
     pos2D = []
@@ -183,7 +185,7 @@ def projection_3D_2D(Liste3D, pos_monde_outil, pos_outil_cam, pos_plaque, intrin
         pos2D.append(proj)
 
     err = projection_error(pos2D, Liste2D)
-    point_3D_2D = appariement(pos2D, points_3D, err, decY, point_3D_2D)
+    point_3D_2D = appariement(pos2D, P_mondes, err, decY, point_3D_2D)
     
     return point_3D_2D
 
