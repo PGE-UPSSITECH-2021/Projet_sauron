@@ -16,7 +16,7 @@ from cv_bridge import CvBridge
 from tsp_solver.greedy import solve_tsp
 
 
-def run_qualite(plaque_pos, nom_plaque, step_folder, dist =  0.18, diametres = [5,7,12,18], pub=None):
+def run_qualite(plaque_pos, nom_plaque, step_folder, image_global, dic_3D_2D, dist =  0.18, diametres = [5,7,12,18], pub=None):
     pub_state(pub, "Debut conformite")
     pub_state(pub, "Calcul de la trajectoire")
     # Lecture du fichier step et recuperation de tous les trous
@@ -79,7 +79,7 @@ def run_qualite(plaque_pos, nom_plaque, step_folder, dist =  0.18, diametres = [
         print("shape = ",cv_image.shape)
         assert (len(cv_image.shape) == 3),"(1) probleme dimensions, image BGR ?"
 
-        isdefective, defect, image = fonction_qualite(p[1],cv_image,debug=False,fast_algo=True)
+        isdefective, defect, image = fonction_qualite(p[1],cv_image,debug=False,fast_algo=True,image_globale=image_global, dic_points_3d_to_2d=dic_3D_2D,curent_3d_point_xyz_tuple=tuple(p[2]))
         isDefective_all.append(isdefective)
 
         image_ros_result = bridge.cv2_to_compressed_imgmsg(image)

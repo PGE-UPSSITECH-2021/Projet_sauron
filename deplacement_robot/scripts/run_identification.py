@@ -15,7 +15,7 @@ import cv2
 
 import matplotlib.pyplot as plt
 
-def run_identification(plaque_pos, nom_plaque, step_folder, diametres, intrinsec, dist =  1.03, seuil=100, pub = None):
+def run_identification(plaque_pos, nom_plaque, step_folder, diametres, intrinsec, pos_outil_cam, dist =  1.03, seuil=100, pub = None):
     pub_state(pub, "Debut identification")
     pub_state(pub, "Calcul de la trajectoire")
 
@@ -53,6 +53,7 @@ def run_identification(plaque_pos, nom_plaque, step_folder, diametres, intrinsec
 
     # Deroulement de la trajectoire et de l'identification
     nbPose = len(poses)
+    point_3D_2D = {}
     for i,pose in enumerate(poses):
         if rospy.is_shutdown():
             exit()
@@ -80,7 +81,7 @@ def run_identification(plaque_pos, nom_plaque, step_folder, diametres, intrinsec
         pos_cam = pose_msg_to_homogeneous_matrix(get_fk())
         #TODO
         pos_outil_cam = np.array([[0,-1,0,-0.035],[1,0,0,-0.035],[0,0,1,0.05],[0,0,0,1]])
-        point_3D_2D = projection_3D_2D(pose[1], pos_cam, pos_outil_cam, plaque_pos, intrinsec, points_im, decalage*i)
+        point_3D_2D = projection_3D_2D(pose[1], pos_cam, pos_outil_cam, plaque_pos, intrinsec, points_im, decalage*i, point_3D_2D)
 
         img = np.concatenate(res_image_originale,axis=1)
 
@@ -100,7 +101,6 @@ def run_identification(plaque_pos, nom_plaque, step_folder, diametres, intrinsec
     image_originale = np.concatenate(res_image_originale,axis=1)
 
     points_msg = []
-    trous = []
 
     pub_state(pub, "Traitement des donnees")
 
@@ -114,7 +114,6 @@ def run_identification(plaque_pos, nom_plaque, step_folder, diametres, intrinsec
             p.y = point.y + i * decalage
             p.diam = point.type
 
-            trous.append((p.x,p.y))
             points_msg.append(p)
 
     msg = Identification()
@@ -130,7 +129,7 @@ def run_identification(plaque_pos, nom_plaque, step_folder, diametres, intrinsec
     raw_input()'''
     pub_state(pub, "Identification terminee")
 
-    return msg, (image_originale, trous)
+    return msg, image_originale, point_3D_2D
 
 def pub_state(pub, msg):
     if not pub is None:
@@ -155,16 +154,15 @@ def projection_error(projection, Liste2D):
     
     return np.mean(erreurs,axis=0)
 
-def appariement(proj, P_3D, err, decY):
-    res = {}
+def appariement(proj, P_3D, err, decY, point_3D_2D):
     for i,p in enumerate(proj):
         p[:1] += decY
         p = np.array(p) - err
-        res[tuple(P_3D[i])] = (int(p[0]), int(p[1]))
+        point_3D_2D[tuple(P_3D[i])] = (int(p[0]), int(p[1]))
 
-    return res
+    return point_3D_2D
 
-def projection_3D_2D(Liste3D, pos_monde_outil, pos_outil_cam, pos_plaque, intrinsic, Liste2D, decY):
+def projection_3D_2D(Liste3D, pos_monde_outil, pos_outil_cam, pos_plaque, intrinsic, Liste2D, decY, point_3D_2D):
     pos_monde_cam = np.dot(pos_monde_outil, pos_outil_cam)
     # Convertion metre to millimetre
     pos_monde_cam[:3,3] = pos_monde_cam[:3,3] * 1000
@@ -185,7 +183,7 @@ def projection_3D_2D(Liste3D, pos_monde_outil, pos_outil_cam, pos_plaque, intrin
         pos2D.append(proj)
 
     err = projection_error(pos2D, Liste2D)
-    point_3D_2D = appariement(pos2D, points_3D, err, decY)
+    point_3D_2D = appariement(pos2D, points_3D, err, decY, point_3D_2D)
     
     return point_3D_2D
 
@@ -266,4 +264,4 @@ if __name__ == "__main__":
                             [0.00000000e+00, 4.77222528e+03, 1.14533714e+03],
                             [0.00000000e+00, 0.00000000e+00, 1.00000000e+00]])
 
-    run_identification(R, "Plaque_1", cwd + "/plaques", [5,7,12,18], intrinsec)
+    run_identification(R, "Plaque_1", cwd + "/plaques", [5,7,12,18], intrinsec, np.array([[0,-1,0,-0.035],[1,0,0,-0.035],[0,0,1,0.05],[0,0,0,1]]))

@@ -28,7 +28,8 @@ class Robot:
                                     [1,  0, 0, -0.035],
                                     [0,  0, 1,  0.05],
                                     [0,  0, 0,  1]])
-        self.image_global = None # TODO
+        self.image_global = None
+        self.dic_3D_2D = None
         self.moveit_commander = moveit_commander.roscpp_initialize(sys.argv)
         self.res_qualite = {}
 
@@ -130,19 +131,6 @@ class Robot:
         self.nom_plaque = nom_plaque
 
         msg,H,succes = run_localisation(self.step_folder + "/" + nom_plaque + ".stp", self.distorsion, self.intrinsic, self.outil_cam, pub=self.pub_prod_state)
-        '''msg = Localisation()
-        msg.x = float(0.55)
-        msg.y = float(0.24)
-        msg.z = float(0.005)
-        msg.a = float(0)
-        msg.b = float(0)
-        msg.g = float(0)
-        self.plaque_pos = np.array([[1,0,0,0.55],
-                                    [0,1,0,0.24],
-                                    [0,0,1,0.005],
-                                    [0,0,0,1]])
-
-        time.sleep(1)'''
 
         srv_etat_loc = rospy.ServiceProxy("set_etat_loc", Set_etat_loc)
 
@@ -172,7 +160,7 @@ class Robot:
         # Reset des resultat de la qualite
         self.res_qualite = {}
 
-        msg,_ = run_identification(self.plaque_pos, nom_plaque, self.step_folder, diametres, self.intrinsic, pub=self.pub_prod_state) #TODO get image global
+        msg,self.image_global,self.dic_3D_2D = run_identification(self.plaque_pos, nom_plaque, self.step_folder, diametres, self.intrinsic, self.outil_cam, pub=self.pub_prod_state) #TODO get image global
 
         if send_result:
             self.pub_result.publish(True,"")
@@ -188,7 +176,7 @@ class Robot:
                 return False
             self.execute_identification(nom_plaque, diametres, send_result=False)
         
-        msg,res = run_qualite(self.plaque_pos, nom_plaque, self.step_folder, diametres=diametres, pub=self.pub_prod_state)
+        msg,res = run_qualite(self.plaque_pos, nom_plaque, self.step_folder, self.image_global, self.dic_3D_2D, diametres=diametres, pub=self.pub_prod_state)
 
         if send_result:
             self.pub_result.publish(True,"")
