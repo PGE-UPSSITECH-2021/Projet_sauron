@@ -8,6 +8,7 @@ import rospkg
 from deplacement_robot.srv import Robot_move, Robot_move_predef
 from communication.srv import capture
 from qualite_interface import fonction_qualite,run_qualite_image_globale
+import copy
 
 from  geometry_msgs.msg import Pose
 from deplacement_robot.msg import Qualite, Trou_qualite
@@ -16,7 +17,9 @@ from cv_bridge import CvBridge
 from tsp_solver.greedy import solve_tsp
 
 
-def run_qualite(plaque_pos, nom_plaque, step_folder, image_global, dic_3D_2D, dist =  0.18, diametres = [5,7,12,18], pub=None):
+def run_qualite(plaque_pos, nom_plaque, step_folder, image_glob, dic_3D_2D, dist =  0.18, diametres = [5,7,12,18], pub=None):
+    image_global = copy.copy(image_glob)
+
     pub_state(pub, "Debut conformite")
     pub_state(pub, "Calcul de la trajectoire")
     # Lecture du fichier step et recuperation de tous les trous
@@ -106,7 +109,7 @@ def run_qualite(plaque_pos, nom_plaque, step_folder, image_global, dic_3D_2D, di
     #Fonction image globale qualite
     #run_qualite_image_globale(liste_points_px,image_globale,isDefective_all)
 
-    #returned_msg.image=None #TODO
+    returned_msg.image= bridge.cv2_to_compressed_imgmsg(image_global)
     returned_msg.trous = trous
     returned_msg.nbTrous = len(trous)
 
