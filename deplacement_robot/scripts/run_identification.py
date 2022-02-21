@@ -78,15 +78,19 @@ def run_identification(plaque_pos, nom_plaque, step_folder, diametres, intrinsec
             points_im.append((p.x, p.y))
 
         pos_cam = pose_msg_to_homogeneous_matrix(get_fk())
-        point_3D_2D = projection_3D_2D(pose[1], pos_cam, intrinsec, points_im, decalage*i)
+	#TODO
+	pos_outil_cam = np.array([[0,-1,0,-0.035],[1,0,0,-0.035],[0,0,1,0.05],[0,0,0,1]])
+        point_3D_2D = projection_3D_2D(pose[1], pos_cam, pos_outil_cam, plaque_pos, intrinsec, points_im, decalage*i)
 
         img = np.concatenate(res_image_originale,axis=1)
 
         for P_3D in point_3D_2D:
             p = point_3D_2D[P_3D]
-            img = cv.circle(img, (p[0],p[1]), 6, (0,0,255), -1)
+	    print(p)
+            img = cv2.circle(img, (p[0],p[1]), 6, (0,0,255), -1)
 
-        cv2.imshow("Result", image)
+	img = cv2.resize(img, (img.shape[1]/3, img.shape[0]/3))
+        cv2.imshow("Result", img)
         cv2.waitKey(0)
     
     pub_state(pub, "Identification finie, retour position parking")
@@ -133,37 +137,39 @@ def pub_state(pub, msg):
     if not pub is None:
         pub.publish(msg)
 
-def get_points_projection(intrinsic, extrinsic, pos_monde_plaque, p):
+def get_points_projection(intrinsic, extrinsic, p):
     # [xi,yi,1] = 1/z*[intrinseque].[extrinseque].[point]
     P_monde = np.hstack((p, 1))
     P_camera = np.dot(extrinsic, P_monde)
     P_2D = np.dot(intrinsic, P_camera[:3]) / P_camera[2]
-    return P_2D
+    return P_2D[:2]
 
 
 def projection_error(projection, Liste2D):
     erreurs = []
 
     for p in projection:
-        P_proj = np.array(P_proj)
-        dists = np.linalg.norm(P_proj - liste2D, axis=1)
-        d_min = np.argmin(dist)
-        erreurs.append(P_proj - liste2D[d_min])
+        P_proj = np.array(p)
+        dists = np.linalg.norm(P_proj - Liste2D, axis=1)
+        d_min = np.argmin(dists)
+        erreurs.append(P_proj - Liste2D[d_min])
     
     return np.mean(erreurs,axis=0)
 
 def appariement(proj, P_3D, err, decY):
     res = {}
-    for p in proj:
-        p[:1] = decY
-        res[list(P_3D)] = list(np.array(p) + err)
+    for i,p in enumerate(proj):
+        p[:1] += decY
+	p = np.array(p) - err
+        res[tuple(P_3D[i])] = (int(p[0]), int(p[1]))
 
     return res
 
-def projection_3D_2D(Liste3D, pos_monde_outil, pos_outil_cam, pos_monde_plaque, intrinsic, Liste2D, decY):
+def projection_3D_2D(Liste3D, pos_monde_outil, pos_outil_cam, pos_plaque, intrinsic, Liste2D, decY):
     pos_monde_cam = np.dot(pos_monde_outil, pos_outil_cam)
     # Convertion metre to millimetre
     pos_monde_cam[:3,3] = pos_monde_cam[:3,3] * 1000
+    pos_monde_plaque = np.array(pos_plaque)
     pos_monde_plaque[:3,3] = pos_monde_plaque[:3,3] * 1000
 
     extrinsic = np.linalg.inv(pos_monde_cam)    
@@ -172,14 +178,15 @@ def projection_3D_2D(Liste3D, pos_monde_outil, pos_outil_cam, pos_monde_plaque, 
     for p in Liste3D:
         P_plaque = np.hstack((p, 1))
         P_monde = np.dot(pos_monde_plaque, P_plaque)
-        points_3D.append(P_monde)
+        points_3D.append(P_monde[:3])
 
     pos2D = []
-    for x, y, z in pos_3D:
-        proj = get_points_projection(intrinsic, extrinsic, pos_monde_plaque, [x,y,z])
-        err = projection_error(proj, Liste2D)
+    for x, y, z in points_3D:
+	proj = get_points_projection(intrinsic, extrinsic, [x,y,z])
+	pos2D.append(proj)
 
-    point_3D_2D = appariement(proj, points_3D, err, decY)
+    err = projection_error(pos2D, Liste2D)
+    point_3D_2D = appariement(pos2D, points_3D, err, decY)
     
     return point_3D_2D
 
@@ -244,7 +251,6 @@ def get_orientation_mat(tz):
     ty = ty / np.linalg.norm(ty)
 
     R = np.hstack((np.array([tx]).T, np.array([ty]).T, np.array([tz]).T))
-    print(R)
 
     return R
 
