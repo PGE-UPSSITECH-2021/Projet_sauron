@@ -78,18 +78,17 @@ def run_identification(plaque_pos, nom_plaque, step_folder, diametres, intrinsec
             points_im.append((p.x, p.y))
 
         pos_cam = pose_msg_to_homogeneous_matrix(get_fk())
-	#TODO
-	pos_outil_cam = np.array([[0,-1,0,-0.035],[1,0,0,-0.035],[0,0,1,0.05],[0,0,0,1]])
+        #TODO
+        pos_outil_cam = np.array([[0,-1,0,-0.035],[1,0,0,-0.035],[0,0,1,0.05],[0,0,0,1]])
         point_3D_2D = projection_3D_2D(pose[1], pos_cam, pos_outil_cam, plaque_pos, intrinsec, points_im, decalage*i)
 
         img = np.concatenate(res_image_originale,axis=1)
 
         for P_3D in point_3D_2D:
             p = point_3D_2D[P_3D]
-	    print(p)
             img = cv2.circle(img, (p[0],p[1]), 6, (0,0,255), -1)
 
-	img = cv2.resize(img, (img.shape[1]/3, img.shape[0]/3))
+        img = cv2.resize(img, (img.shape[1]/3, img.shape[0]/3))
         cv2.imshow("Result", img)
         cv2.waitKey(0)
     
@@ -160,7 +159,7 @@ def appariement(proj, P_3D, err, decY):
     res = {}
     for i,p in enumerate(proj):
         p[:1] += decY
-	p = np.array(p) - err
+        p = np.array(p) - err
         res[tuple(P_3D[i])] = (int(p[0]), int(p[1]))
 
     return res
@@ -182,8 +181,8 @@ def projection_3D_2D(Liste3D, pos_monde_outil, pos_outil_cam, pos_plaque, intrin
 
     pos2D = []
     for x, y, z in points_3D:
-	proj = get_points_projection(intrinsic, extrinsic, [x,y,z])
-	pos2D.append(proj)
+        proj = get_points_projection(intrinsic, extrinsic, [x,y,z])
+        pos2D.append(proj)
 
     err = projection_error(pos2D, Liste2D)
     point_3D_2D = appariement(pos2D, points_3D, err, decY)
