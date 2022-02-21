@@ -36,7 +36,7 @@ def fonction_qualite(rayon_attendu,image_raw,debug,showResult = True,fast_algo= 
 				plt.imshow(resized_image)
 				plt.draw()
 				plt.pause(0.001)        
-			return True,"Trou non detecte",resized_image
+			return False,"Trou non detecte",resized_image
 
 
 		if(debug):
@@ -74,7 +74,7 @@ def fonction_qualite(rayon_attendu,image_raw,debug,showResult = True,fast_algo= 
 		now = datetime.now()
 		date_time = now.strftime("ERROR_%m_%d_%Y__%H_%M_%S")
 		cv2.imwrite("./"+date_time+".png", image_raw)
-		return True,"Erreur qualite",image_raw
+		return False,"Erreur qualite",image_raw
 
 ######################################
 
