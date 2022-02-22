@@ -60,7 +60,7 @@ class Robot:
         self.aquitement = False
         rate = rospy.Rate(10)
         while not self.aquitement and not rospy.is_shutdown():
-            print("spam")
+            #print("spam")
             pub.publish(msg)
 
     # Fonction pour changer l etat de la production
