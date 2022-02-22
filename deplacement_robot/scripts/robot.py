@@ -189,18 +189,13 @@ class Robot:
 
     # Fonction pour lancer la phase de qualites
     def execute_pointage(self, nom_plaque, diametres):
-        if self.nom_plaque != nom_plaque or self.plaque_pos is None:
-            self.execute_localisation(nom_plaque, send_result=False)
-            self.execute_identification(nom_plaque, diametres, send_result=False)
-            self.execute_qualite(nom_plaque, diametres, send_result=False)
+        succes = self.execute_localisation(nom_plaque, send_result=False)
 
-        diam_non_qual = []
-        for d in diametres:
-            if not d in self.res_qualite:
-                diam_non_qual.append(d)
-        if not diam_non_qual == []:
-            self.execute_qualite(nom_plaque, diam_non_qual, send_result=False)
+        if not succes :
+            return False
 
+        self.execute_identification(nom_plaque, diametres, send_result=False)
+        self.execute_qualite(nom_plaque, diametres, send_result=False)
         run_pointage(self.res_qualite, diametres, pub=self.pub_prod_state)
 
         self.pub_result.publish(True,"")
