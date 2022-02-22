@@ -216,7 +216,7 @@ def run():
 
 		command = None
 
-		print(all_sys_ok, calib_ok, loc_ok, id_ok, qual_ok)
+		#print(all_sys_ok, calib_ok, loc_ok, id_ok, qual_ok)
 		
 		# check if everything is fine
 		while not all_sys_ok:

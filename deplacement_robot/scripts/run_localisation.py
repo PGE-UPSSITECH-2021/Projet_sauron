@@ -27,7 +27,7 @@ def localiser(type_plaque,model_path,image,M_hom_3D,M_pass_oc,M_intr,coeff_distr
         trans,rot,matrice_extr,bryant = main_loc(type_plaque,model_path,image,M_hom_3D,M_pass_oc,M_intr,coeff_distr)
         #trans,rot,matrice_extr,bryant = localisation(type_plaque,model_path,image,M_hom_3D,M_pass_oc,M_intr,coeff_distr)
         return trans,rot,matrice_extr,bryant
-    except(UntrustworthyLocalisationError,MatchingError),e:
+    except(UntrustworthyLocalisationError,MatchingError) as e:
         return str(e)
         
 
@@ -81,17 +81,17 @@ def run_localisation(path,distortion_coefs,intrinsic_mat,M_pass_oc,pub=None):
                     print(extrinseque)
                     print(bryant)
                     pub_state(pub,"Plaque localisee avec succes")
-		    pub_state(pub,"Retour en position parking")
+                    pub_state(pub,"Retour en position parking")
                     move_parking()
                     localisation_success = True
-		    trans = list(extrinseque[:3,3])
+                    trans = list(extrinseque[:3,3])
                     for e in bryant:
                         trans.append(e)
                     msg = send_results(trans, img)
                     return msg,extrinseque, localisation_success
                     
                 
-        except (TypeError,ValueError) , e:
+        except (TypeError,ValueError) as e:
             pub_state(pub,"Plaque non trouvee")
             print(e)
         except MatchingError as e:
@@ -99,12 +99,11 @@ def run_localisation(path,distortion_coefs,intrinsic_mat,M_pass_oc,pub=None):
 
         except UntrustworthyLocalisationError as e:
             pub_state(pub,"L'erreur de localisation est trop grande")
-        
-        '''except Exception as e:
-            pub_state(pub,"Autre erreur")'''
+                
+    pub_state(pub,"Retour en position parking")
+    move_parking()
     return Localisation(), None, False
-
-        #return msg_ros, extrinsinc matrix, bool : False après 4 essasi sinon true
+    #return msg_ros, extrinsinc matrix, bool : False après 4 essasi sinon true
 
   
 
