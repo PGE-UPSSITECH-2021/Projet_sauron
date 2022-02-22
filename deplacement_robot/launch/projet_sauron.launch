@@ -1,6 +1,6 @@
 <launch>
     <arg name="sim" default="false" />
-    <arg name="speed_percentage" default="5" />
+    <arg name="speed_percentage" default="15" />
     <arg name="robot_ip" default="192.168.0.113" />
     <arg name="controller" default="yrc1000" />
 
