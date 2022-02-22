@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+# coding: utf-8
+
 from http.client import CONTINUE
 from StepReader import StepReader
 from useful_robot import rotation_between_vect, homogeneous_matrix_to_pose_msg
@@ -85,6 +87,7 @@ def run_qualite(plaque_pos, nom_plaque, step_folder, image_glob, dic_3D_2D, dist
         isdefective, defect, image = fonction_qualite(p[1],cv_image,debug=False,fast_algo=True,image_globale=image_global, dic_points_3d_to_2d=dic_3D_2D,curent_3d_point_xyz_tuple=tuple(np.round(p[2],3)))
         isDefective_all.append(isdefective)
 
+        # Ecriture du message ROS
         image_ros_result = bridge.cv2_to_compressed_imgmsg(image)
 
         trou_qualite_msg.x= p[2][0]
@@ -100,7 +103,7 @@ def run_qualite(plaque_pos, nom_plaque, step_folder, image_glob, dic_3D_2D, dist
         dict_res_qual[tuple(p[2])] = (p[0],isdefective)
         results_qualite[p[1]*2] = dict_res_qual
 
-        # Pour les tests
+        # DEBUG
         #print("Print diametre pour test : ",trou_qualite_msg.diam)
         #print("press enter")
         #raw_input()
@@ -121,11 +124,12 @@ def run_qualite(plaque_pos, nom_plaque, step_folder, image_glob, dic_3D_2D, dist
 
     return returned_msg, results_qualite
 
-
+# Fonction pour publier l'état de la production
 def pub_state(pub, msg):
     if not pub is None:
         pub.publish(msg)
 
+# Fonction pour trouver les trous dans la CAO
 def get_holes(file_path, diametres):
     step = StepReader(file_path)
 
@@ -137,14 +141,17 @@ def get_holes(file_path, diametres):
 
     return d
 
+# Calcul du chemin à suivre
 def get_path(plaque_pos, dist, d):
     points = []
     
     keys = d.keys()
 
+    # Algorithme TSP pour trouver le chemin de parcour optimal
     dist_keys = get_distance(keys)
     order = solve_tsp(dist_keys)
 
+    # Réorganisation des points selon le chemin optimal
     for o in order :
         k = keys[o]
         v = np.array(d[k].direction)
@@ -174,6 +181,7 @@ def get_path(plaque_pos, dist, d):
 
     return points
 
+# fonction pour passer d'un vecteur directeur à une matrice de rotation
 def get_orientation_mat(tz):
     tz = tz / np.linalg.norm(tz)
     tx = np.cross(tz,[0,1,0])
@@ -185,6 +193,7 @@ def get_orientation_mat(tz):
 
     return R
 
+# Fonction pour calculer la matrice de distance pour une liste de points
 def get_distance(v):
     v = np.array(v)
     dist_l = []
@@ -194,6 +203,7 @@ def get_distance(v):
     dist_M = dist_M.T
     return dist_M
 
+# main de test
 if __name__ == "__main__":
     rospy.init_node('test_identification', anonymous=True)
     R = np.eye(4)

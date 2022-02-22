@@ -209,6 +209,7 @@ class Robot:
 
         return True
 
+    #Fonction pour forcer la conformité des tous
     def forcer_conformite(self, msg):
         dic_trous = self.res_qualite.get(msg.diametre*2, None)
 

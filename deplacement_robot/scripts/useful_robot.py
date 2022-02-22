@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+# coding: utf-8
+
 from pyquaternion import Quaternion
 import numpy as np
 
@@ -11,6 +13,7 @@ from moveit_msgs.srv import GetPositionFK
 from moveit_msgs.srv import GetPositionFKRequest
 from moveit_msgs.srv import GetPositionFKResponse
 
+# Fonction pour passer d'une matrice de passage homogène à un message geometry_msgs/Pose 
 def homogeneous_matrix_to_pose_msg(mat):
     # message creation
     pose = Pose()
@@ -29,6 +32,7 @@ def homogeneous_matrix_to_pose_msg(mat):
 
     return pose
 
+# Fonction pour passer d'un message geometry_msgs/Pose à une matrice de passage homogène
 def pose_msg_to_homogeneous_matrix(pose):
     q = Quaternion(pose.orientation.w, pose.orientation.x, pose.orientation.y, pose.orientation.z)
     mat = np.eye(4)
@@ -43,6 +47,7 @@ def pose_msg_to_homogeneous_matrix(pose):
 
     return mat
 
+# fonction pour obtenir un geometry_msgs/Pose de la forward kinematics
 def get_fk(joint_state = None, fk_link="tool0", frame_id="base_link"):
         """
         Do an FK call to with.
@@ -66,6 +71,7 @@ def get_fk(joint_state = None, fk_link="tool0", frame_id="base_link"):
             rospy.logerr("Service exception: " + str(e))
             return None
 
+# Fonction pour obtenir la matrice de rotation entre deux vecteur
 def rotation_between_vect(a, b):
     a = a / np.linalg.norm(a)
     b = b / np.linalg.norm(b)
@@ -82,11 +88,5 @@ def rotation_between_vect(a, b):
     vx = np.array([ [0, -v[2], v[1]],
                     [v[2], 0, -v[0]],
                     [-v[1], v[0], 0]])
-
-    '''print(a)
-    print(b)
-    print(v)
-    print(s)
-    print(c)'''
 
     return np.eye(3) + vx + np.dot(vx,vx) * (1-c) / s**2
