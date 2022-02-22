@@ -210,7 +210,7 @@ class Robot:
         return True
 
     def forcer_conformite(self, msg):
-        dic_trous = self.res_qualite.get(msg.diametre, None)
+        dic_trous = self.res_qualite.get(msg.diametre*2, None)
 
         if dic_trous is None :
             rospy.loginfo("Forcer conformite : diametre inconnu")
