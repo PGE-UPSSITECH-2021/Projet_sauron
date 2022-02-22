@@ -29,6 +29,7 @@ add_message_files(
   Trou_qualite.msg
   Localisation.msg
   Result.msg
+  Forcer_conforme.msg
 )
 
 generate_messages(
