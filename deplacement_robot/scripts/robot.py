@@ -8,7 +8,7 @@ from run_qualite import run_qualite
 from run_identification import run_identification
 from run_pointage import run_pointage
 from run_localisation import run_localisation
-from deplacement_robot.msg import Identification, Qualite, Localisation, Result
+from deplacement_robot.msg import Identification, Qualite, Localisation, Result, Forcer_conforme
 from std_msgs.msg import Bool, String
 from deplacement_robot.srv import Robot_set_state, Robot_move_predef, Set_etat_loc
 import moveit_commander
@@ -31,7 +31,7 @@ class Robot:
         self.image_global = None
         self.dic_3D_2D = None
         self.moveit_commander = moveit_commander.roscpp_initialize(sys.argv)
-        self.res_qualite = {}
+        self.res_qualite = {} # {diametre:{(x,y,z):(msg_ROS,conforme)}}
 
         rospack = rospkg.RosPack()
         self.step_folder = rospack.get_path("deplacement_robot") + "/plaques"
@@ -46,6 +46,7 @@ class Robot:
         self.srv_set_robot_state = rospy.ServiceProxy("set_robot_state", Robot_set_state)
 
         rospy.Subscriber("/result/ok", Bool, self.result_aquitement)
+        rospy.Subscriber("/forcer_conformite", Forcer_conforme, self.forcer_conformite)
 
         self.aquitement = False
 
@@ -189,15 +190,36 @@ class Robot:
 
     # Fonction pour lancer la phase de qualites
     def execute_pointage(self, nom_plaque, diametres):
-        succes = self.execute_localisation(nom_plaque, send_result=False)
+        if self.nom_plaque != nom_plaque or self.plaque_pos is None:
+            self.execute_localisation(nom_plaque, send_result=False)
+            self.execute_identification(nom_plaque, diametres, send_result=False)
+            self.execute_qualite(nom_plaque, diametres, send_result=False)
 
-        if not succes :
-            return False
+        diam_non_qual = []
+        for d in diametres:
+            if not d in self.res_qualite:
+                diam_non_qual.append(d)
+        if not diam_non_qual == []:
+            self.execute_qualite(nom_plaque, diam_non_qual, send_result=False)
 
-        self.execute_identification(nom_plaque, diametres, send_result=False)
-        self.execute_qualite(nom_plaque, diametres, send_result=False)
         run_pointage(self.res_qualite, diametres, pub=self.pub_prod_state)
 
         self.pub_result.publish(True,"")
 
         return True
+
+    def forcer_conformite(self, msg):
+        dic_trous = self.res_qualite.get(msg.diametre, None)
+
+        if dic_trous is None :
+            rospy.loginfo("Forcer conformite : diametre inconnu")
+            return
+        
+        for xyz in dic_trous : 
+            if np.round([xyz[0],xyz[1]],3) == np.round([msg.x,msg.y],3):
+                dic_trous[xyz] = (dic_trous[xyz][0], True)
+                rospy.loginfo("Forcer conformite : trou " + str(xyz) + "force conforme")
+                return
+
+        rospy.loginfo("Forcer conformite : trou inconnu")
+        
