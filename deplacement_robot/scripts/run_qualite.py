@@ -79,7 +79,7 @@ def run_qualite(plaque_pos, nom_plaque, step_folder, image_glob, dic_3D_2D, dist
         rosimage = res.image
         cv_image = bridge.imgmsg_to_cv2(rosimage, 'bgr8')
 
-        print("shape = ",cv_image.shape)
+        #print("shape = ",cv_image.shape)
         assert (len(cv_image.shape) == 3),"(1) probleme dimensions, image BGR ?"
 
         isdefective, defect, image = fonction_qualite(p[1],cv_image,debug=False,fast_algo=True,image_globale=image_global, dic_points_3d_to_2d=dic_3D_2D,curent_3d_point_xyz_tuple=tuple(np.round(p[2],3)))
@@ -104,10 +104,6 @@ def run_qualite(plaque_pos, nom_plaque, step_folder, image_glob, dic_3D_2D, dist
         #print("Print diametre pour test : ",trou_qualite_msg.diam)
         #print("press enter")
         #raw_input()
-    
-    # TODO
-    #Fonction image globale qualite
-    #run_qualite_image_globale(liste_points_px,image_globale,isDefective_all)
 
     returned_msg.image= bridge.cv2_to_compressed_imgmsg(image_global)
     returned_msg.trous = trous

@@ -176,7 +176,7 @@ def projection_3D_2D(Liste3D, pos_monde_outil, pos_outil_cam, pos_plaque, intrin
     for p in Liste3D:
         P_plaque = np.hstack((p, 1))
         P_monde = np.dot(pos_monde_plaque, P_plaque)
-	P_mondes.append(P_monde[:3])
+        P_mondes.append(P_monde[:3])
         points_3D.append(P_monde[:3])
 
     pos2D = []
