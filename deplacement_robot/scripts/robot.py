@@ -217,7 +217,7 @@ class Robot:
             return
         
         for xyz in dic_trous : 
-            if np.round([xyz[0],xyz[1]],3) == np.round([msg.x,msg.y],3):
+            if (np.round([xyz[0],xyz[1]],3) == np.round([msg.x,msg.y],3)).all():
                 dic_trous[xyz] = (dic_trous[xyz][0], True)
                 rospy.loginfo("Forcer conformite : trou " + str(xyz) + "force conforme")
                 return
