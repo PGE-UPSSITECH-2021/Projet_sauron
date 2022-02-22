@@ -3,7 +3,7 @@
 
 import rospy
 from deplacement_robot.msg import IHM_msg
-
+from std_msgs.msg import Bool
 from robot import Robot
 
 global ihm_data
@@ -207,6 +207,8 @@ def run():
 		rospy.Subscriber(params['name'], params['datatype'], params['callback'])
 
 	rate = rospy.Rate(10)
+
+	rospy.wait_for_message("scene_loaded", Bool)
 
 	calib_ok = run_initialisation()
 

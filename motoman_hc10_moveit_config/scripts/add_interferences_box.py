@@ -5,6 +5,7 @@ import rospy
 import moveit_commander
 import geometry_msgs.msg
 import roslib; roslib.load_manifest('motoman_driver')
+from std_msgs.msg import Bool
 
 class MoveGroupPythonIntefaceTutorial(object):
   def __init__(self):
@@ -111,6 +112,11 @@ class MoveGroupPythonIntefaceTutorial(object):
 
         self.box_name = box_name
         self.wait_for_state_update(box_is_known=True)
+
+    pub = rospy.Publisher('scene_loaded', Bool, queue_size=10)
+    r = rospy.Rate(1)
+    while not rospy.is_shutdown():
+      pub.publish(True)
 
 def main():
   try:

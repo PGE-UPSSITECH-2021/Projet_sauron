@@ -43,6 +43,7 @@ class Robot:
         
         self.pub_prod_state = rospy.Publisher("production_state", String,  queue_size=10)
 
+        rospy.wait_for_service("set_robot_state")
         self.srv_set_robot_state = rospy.ServiceProxy("set_robot_state", Robot_set_state)
 
         rospy.Subscriber("/result/ok", Bool, self.result_aquitement)
