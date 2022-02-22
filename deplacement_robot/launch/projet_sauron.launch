@@ -21,9 +21,9 @@
 
     <node name="move_robot_server" pkg="deplacement_robot" type="move_robot_server.py" args="$(arg speed_percentage)" output="screen"/>
 
-    <node name="node_securite" pkg="deplacement_robot" type=".py" output="screen"/>
+    <node name="node_securite" pkg="deplacement_robot" type="node_securite.py" output="screen"/>
 
     <node pkg="rosservice" type="rosservice" name="rosservice" args="call /robot_enable"/>
 
-    <node name="move_robot_controller" pkg="deplacement_robot" type=".py" output="screen"/>
+    <node name="move_robot_controller" pkg="deplacement_robot" type="move_robot_controller.py" output="screen"/>
 </launch>
