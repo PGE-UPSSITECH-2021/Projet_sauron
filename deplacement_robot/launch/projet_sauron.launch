@@ -15,7 +15,15 @@
         </include>
     </group>
 
+    <include file="$(find communication)/launch/roslaunch_cognex.launch" />
+
     <include file="$(find rosbridge_server)/launch/rosbridge_websocket.launch"/>
 
     <node name="move_robot_server" pkg="deplacement_robot" type="move_robot_server.py" args="$(arg speed_percentage)" output="screen"/>
+
+    <node name="node_securite" pkg="deplacement_robot" type=".py" output="screen"/>
+
+    <node pkg="rosservice" type="rosservice" name="rosservice" args="call /robot_enable"/>
+
+    <node name="move_robot_controller" pkg="deplacement_robot" type=".py" output="screen"/>
 </launch>
